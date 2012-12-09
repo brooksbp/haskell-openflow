@@ -102,6 +102,8 @@ data OfpMsg = OfptHello [Word8]
             | OfptSetConfig OfpSwitchConfig
             | OfptPacketIn OfpPacketIn
             | OfptFlowMod OfpFlowMod
+            | OfptBarrierRequest
+            | OfptBarrierReply
             deriving (Show)
 
 -- Immutable messages
@@ -128,8 +130,8 @@ msgType (OfptFlowMod _)          = 14
 --msgType (OfptStatsRequest)       = 16
 --msgType (OfptStatsReply)         = 17
 ---- Barrier messages
---msgType (OfptBarrierRequest)     = 18
---msgType (OfptBarrierReply)       = 19
+msgType (OfptBarrierRequest)     = 18
+msgType (OfptBarrierReply)       = 19
 ---- Queue configuration messages
 --msgType (OfptGetConfigRequest)   = 20
 --msgType (OfptGetConfigReply)     = 21
@@ -679,12 +681,13 @@ putOfpMsg (OfptFeaturesReply (OfpSwitchFeatures dip nbuf ntab caps actions ports
   putWord32be $ enumToBitInst caps
   putWord32be $ enumToBitInst actions
   mapM_ put ports
-putOfpMsg (OfptGetConfigRequest) = putByteString BS.empty
+putOfpMsg (OfptGetConfigRequest)            = putByteString BS.empty
 putOfpMsg (OfptGetConfigReply switchConfig) = put switchConfig
-putOfpMsg (OfptSetConfig switchConfig) = put switchConfig
-putOfpMsg (OfptPacketIn packetIn) = put packetIn
-putOfpMsg (OfptFlowMod flowMod) = put flowMod
-
+putOfpMsg (OfptSetConfig switchConfig)      = put switchConfig
+putOfpMsg (OfptPacketIn packetIn)           = put packetIn
+putOfpMsg (OfptFlowMod flowMod)             = put flowMod
+putOfpMsg (OfptBarrierRequest)              = putByteString BS.empty
+putOfpMsg (OfptBarrierReply)                = putByteString BS.empty
         
 readMany :: (Serialize t) => BS.ByteString -> [t]
 readMany bs = case runGet (readMany' [] 0) bs of
@@ -725,6 +728,8 @@ getOfpMsg (OfpHeader _ ty len _) =
     9 -> OfptSetConfig      <$> get
     10 -> OfptPacketIn      <$> get
     14 -> OfptFlowMod       <$> get
+    18 -> return OfptBarrierRequest
+    19 -> return OfptBarrierReply
   where
     len' = fromIntegral len
     getMsg = liftM BS.unpack (getByteString (len' - ofpHdrLen))

@@ -44,7 +44,8 @@ main = do
   bounce sock (OfpFrame (OfpHeader 1 0 0 42) (OfptGetConfigReply (OfpSwitchConfig [OfpcFragNormal, OfpcFragMask] 1234)))
   bounce sock (OfpFrame (OfpHeader 1 0 0 42) (OfptFlowMod flowMod))
   bounce sock $ mkFrame (OfptPacketIn (OfpPacketIn 1 1 1 OfprNoMatch []))
-  
+  bounce sock $ mkFrame (OfptBarrierRequest)
+
   sClose sock
 
   where
