@@ -26,6 +26,7 @@ module Network.OpenFlow (
   , OfpFlowWildcards(..)
   , OfpPacketIn(..)
   , OfpPacketInReason(..)
+  , OfpPacketOut(..)
   , readOfpFrame
   ) where
 
@@ -101,40 +102,41 @@ data OfpMsg = OfptHello [Word8]
             | OfptGetConfigReply OfpSwitchConfig
             | OfptSetConfig OfpSwitchConfig
             | OfptPacketIn OfpPacketIn
+            | OfptPacketOut OfpPacketOut
             | OfptFlowMod OfpFlowMod
             | OfptBarrierRequest
             | OfptBarrierReply
             deriving (Show)
 
--- Immutable messages
+-- | Immutable messages
 msgType (OfptHello _)            = 0
 msgType (OfptError _)            = 1
 msgType (OfptEchoRequest _)      = 2
 msgType (OfptEchoReply _)        = 3
 msgType (OfptVendor)             = 4
----- Switch configuration messages
+-- | Switch configuration messages
 msgType (OfptFeaturesRequest)    = 5
 msgType (OfptFeaturesReply _)    = 6
 msgType (OfptGetConfigRequest)   = 7
 msgType (OfptGetConfigReply _)   = 8
 msgType (OfptSetConfig _)        = 9
----- Asynchronous messages
+-- | Asynchronous messages
 msgType (OfptPacketIn _)         = 10
 --msgType (OfptFlowRemoved)        = 11
 --msgType (OfptPortStatus)         = 12
----- Controller command messages
---msgType (OfptPacketOut)          = 13
+-- | Controller command messages
+msgType (OfptPacketOut _)        = 13
 msgType (OfptFlowMod _)          = 14
 --msgType (OfptPortMod)            = 15
----- Statistics messages
+-- | Statistics messages
 --msgType (OfptStatsRequest)       = 16
 --msgType (OfptStatsReply)         = 17
----- Barrier messages
+-- | Barrier messages
 msgType (OfptBarrierRequest)     = 18
 msgType (OfptBarrierReply)       = 19
----- Queue configuration messages
---msgType (OfptGetConfigRequest)   = 20
---msgType (OfptGetConfigReply)     = 21
+-- | Queue configuration messages
+--msgType (OfptQueueGetConfigRequest)   = 20
+--msgType (OfptQueueGetConfigReply)     = 21
 
 data OfpError = OfpetHelloFailed OfpHelloFailedCode String
               | OfpetBadRequest OfpBadRequestCode
@@ -484,7 +486,9 @@ instance Serialize OfpAction where
         pad2 <- getWord8
         pad3 <- getWord8
         return $ OfpSetVlanPcp vlanPcp
-      3 -> return OfpStripVlan
+      3 -> do
+        pad1 <- getWord32be
+        return $ OfpStripVlan
       4 -> do
         mac <- get :: Get MAC
         pad1 <- getWord16be
@@ -648,6 +652,33 @@ data OfpPacketInReason = OfprNoMatch
                        | OfprAction
                        deriving (Show, Enum)
 
+data OfpPacketOut =
+  OfpPacketOut { poBufferId :: Word32
+               , poInPort   :: Word16
+               , poActions  :: [OfpAction]
+               , poDat      :: [Word8]
+               } deriving (Show)
+
+instance Serialize OfpPacketOut where
+  put (OfpPacketOut bufferId inPort actions dat) = do
+    putWord32be bufferId
+    putWord16be inPort
+    let actions' = runPut (mapM_ put actions)
+    let len = BS.length actions'
+    put ((fromIntegral len) :: Word16)
+    putByteString actions'
+    putByteString $ BS.pack dat
+  get = do
+    bufferId   <- getWord32be
+    inPort     <- getWord16be
+    actionsLen <- getWord16be
+    actionsBS  <- getByteString (fromIntegral actionsLen)
+    let actions = readMany actionsBS
+    rem  <- remaining
+    dat' <- getByteString rem
+    let dat = BS.unpack dat'
+    return $ OfpPacketOut bufferId inPort actions dat
+
 putOfpErrorMsg ty code = do
   putWord16be ty
   putWord16be $ fromIntegral $ fromEnum code
@@ -685,6 +716,7 @@ putOfpMsg (OfptGetConfigRequest)            = putByteString BS.empty
 putOfpMsg (OfptGetConfigReply switchConfig) = put switchConfig
 putOfpMsg (OfptSetConfig switchConfig)      = put switchConfig
 putOfpMsg (OfptPacketIn packetIn)           = put packetIn
+putOfpMsg (OfptPacketOut packetOut)         = put packetOut
 putOfpMsg (OfptFlowMod flowMod)             = put flowMod
 putOfpMsg (OfptBarrierRequest)              = putByteString BS.empty
 putOfpMsg (OfptBarrierReply)                = putByteString BS.empty
@@ -727,6 +759,7 @@ getOfpMsg (OfpHeader _ ty len _) =
     8 -> OfptGetConfigReply <$> get
     9 -> OfptSetConfig      <$> get
     10 -> OfptPacketIn      <$> get
+    13 -> OfptPacketOut     <$> get
     14 -> OfptFlowMod       <$> get
     18 -> return OfptBarrierRequest
     19 -> return OfptBarrierReply
