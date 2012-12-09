@@ -43,10 +43,12 @@ main = do
   bounce sock (OfpFrame (OfpHeader 1 0 0 42) (OfptFeaturesReply (OfpSwitchFeatures 0 0 0 [OfpcFlowStats, OfpcQueueStats] [OfpatOutput, OfpatEnqueue] [phyPort1, phyPort2])))
   bounce sock (OfpFrame (OfpHeader 1 0 0 42) (OfptGetConfigReply (OfpSwitchConfig [OfpcFragNormal, OfpcFragMask] 1234)))
   bounce sock (OfpFrame (OfpHeader 1 0 0 42) (OfptFlowMod flowMod))
-
+  bounce sock $ mkFrame (OfptPacketIn (OfpPacketIn 1 1 1 OfprNoMatch []))
+  
   sClose sock
 
   where
+    mkFrame msg = (OfpFrame (OfpHeader 1 0 0 42) msg)
     bounce sock' frame = do
       sendAll sock' $ encode frame
       frame <- readOfpFrame sock'

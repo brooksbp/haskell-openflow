@@ -24,6 +24,8 @@ module Network.OpenFlow (
   , OfpFlowModFlags(..)
   , OfpAction(..)
   , OfpFlowWildcards(..)
+  , OfpPacketIn(..)
+  , OfpPacketInReason(..)
   , readOfpFrame
   ) where
 
@@ -98,6 +100,7 @@ data OfpMsg = OfptHello [Word8]
             | OfptGetConfigRequest
             | OfptGetConfigReply OfpSwitchConfig
             | OfptSetConfig OfpSwitchConfig
+            | OfptPacketIn OfpPacketIn
             | OfptFlowMod OfpFlowMod
             deriving (Show)
 
@@ -114,7 +117,7 @@ msgType (OfptGetConfigRequest)   = 7
 msgType (OfptGetConfigReply _)   = 8
 msgType (OfptSetConfig _)        = 9
 ---- Asynchronous messages
---msgType (OfptPacketIn)           = 10
+msgType (OfptPacketIn _)         = 10
 --msgType (OfptFlowRemoved)        = 11
 --msgType (OfptPortStatus)         = 12
 ---- Controller command messages
@@ -610,6 +613,38 @@ data OfpFlowModFlags = OfpffSendFlowRem
                      | OfpffEmerg
                      deriving (Show, Enum)
 
+data OfpPacketIn =
+  OfpPacketIn { piBufferId :: Word32
+              , totalLen   :: Word16
+              , piInPort   :: Word16
+              , reason     :: OfpPacketInReason
+              , dat        :: [Word8]
+              } deriving (Show)
+
+instance Serialize OfpPacketIn where
+  put (OfpPacketIn bufferId _ inPort reason dat) = do
+    let dat' = BS.pack dat
+    let len  = BS.length dat'
+    putWord32be bufferId
+    put ((fromIntegral len) :: Word16)
+    putWord16be inPort
+    putWord8 $ fromIntegral $ fromEnum reason
+    putByteString dat'
+  get = do
+    bufferId <- getWord32be
+    totalLen <- getWord16be
+    inPort   <- getWord16be
+    reason'  <- liftM fromIntegral getWord8
+    let reason = toEnum reason' :: OfpPacketInReason
+    rem  <- remaining
+    -- assert(rem == totalLen)
+    dat' <- getByteString rem
+    let dat = BS.unpack dat'
+    return $ OfpPacketIn bufferId totalLen inPort reason dat
+
+data OfpPacketInReason = OfprNoMatch
+                       | OfprAction
+                       deriving (Show, Enum)
 
 putOfpErrorMsg ty code = do
   putWord16be ty
@@ -647,6 +682,7 @@ putOfpMsg (OfptFeaturesReply (OfpSwitchFeatures dip nbuf ntab caps actions ports
 putOfpMsg (OfptGetConfigRequest) = putByteString BS.empty
 putOfpMsg (OfptGetConfigReply switchConfig) = put switchConfig
 putOfpMsg (OfptSetConfig switchConfig) = put switchConfig
+putOfpMsg (OfptPacketIn packetIn) = put packetIn
 putOfpMsg (OfptFlowMod flowMod) = put flowMod
 
         
@@ -687,6 +723,7 @@ getOfpMsg (OfpHeader _ ty len _) =
     7 -> return OfptGetConfigRequest
     8 -> OfptGetConfigReply <$> get
     9 -> OfptSetConfig      <$> get
+    10 -> OfptPacketIn      <$> get
     14 -> OfptFlowMod       <$> get
   where
     len' = fromIntegral len
