@@ -44,7 +44,6 @@ m = OfpMatch wc inp emptyMac emptyMac 0 0 0 0 0 0 0 0 0
 
 act1 = OfpOutput 5 256
 act2 = OfpOutput 6 256
--- Incorrect bufferId crashes switch
 uint32max = 0xffffffff
 pri = 1
 flowMod = OfpFlowMod m 0 OfpfcAdd 360 360 pri uint32max outp OfpffSendFlowRem [act1, act2]
