@@ -29,6 +29,9 @@ module Network.OpenFlow (
   , OfpPacketOut(..)
   , OfpFlowRemoved(..)
   , OfpFlowRemovedReason(..)
+  , OfpPortStatus(..)
+  , OfpPortReason(..)
+  , OfpPortMod(..)
   , readOfpFrame
   ) where
 
@@ -100,8 +103,10 @@ data OfpMsg = OfptHello [Word8]
             | OfptSetConfig OfpSwitchConfig
             | OfptPacketIn OfpPacketIn
             | OfptFlowRemoved OfpFlowRemoved
+            | OfptPortStatus OfpPortStatus
             | OfptPacketOut OfpPacketOut
             | OfptFlowMod OfpFlowMod
+            | OfptPortMod OfpPortMod
             | OfptBarrierRequest
             | OfptBarrierReply
             deriving (Show)
@@ -121,11 +126,11 @@ msgType (OfptSetConfig _)        = 9
 -- | Asynchronous messages
 msgType (OfptPacketIn _)         = 10
 msgType (OfptFlowRemoved _)      = 11
---msgType (OfptPortStatus)         = 12
+msgType (OfptPortStatus _)       = 12
 -- | Controller command messages
 msgType (OfptPacketOut _)        = 13
 msgType (OfptFlowMod _)          = 14
---msgType (OfptPortMod)            = 15
+msgType (OfptPortMod _)          = 15
 -- | Statistics messages
 --msgType (OfptStatsRequest)       = 16
 --msgType (OfptStatsReply)         = 17
@@ -716,7 +721,61 @@ instance Serialize OfpFlowRemoved where
 data OfpFlowRemovedReason = OfprrIdleTimeout
                           | OfprrHardTimeout
                           | OfprrDelete
-                            deriving (Show, Enum)
+                          deriving (Show, Enum)
+
+data OfpPortStatus =
+  OfpPortStatus { psReason :: OfpPortReason
+                , desc     :: OfpPhyPort
+                } deriving (Show)
+
+instance Serialize OfpPortStatus where
+  put (OfpPortStatus reason desc) = do
+    putWord8 $ fromIntegral $ fromEnum reason
+    putWord32be 0 -- pad
+    putWord16be 0 -- pad
+    putWord8 0    -- pad
+    put desc
+  get = do
+    reason' <- liftM fromIntegral getWord8
+    let reason = toEnum reason' :: OfpPortReason
+    pad1 <- getWord32be
+    pad2 <- getWord16be
+    pad3 <- getWord8
+    desc <- get :: Get OfpPhyPort
+    return $ OfpPortStatus reason desc
+
+data OfpPortReason = OfpprAdd
+                   | OfpprDelete
+                   | OfpprModify
+                   deriving (Show, Enum)
+
+data OfpPortMod =
+  OfpPortMod { pmPortNo    :: Word16
+             , pmHwAddr    :: MAC
+             , pmConfig    :: [OfpPortConfig]
+             , pmMask      :: [OfpPortConfig]
+             , pmAdvertise :: [OfpPortFeatures]
+             } deriving (Show)
+
+instance Serialize OfpPortMod where
+  put (OfpPortMod portNo hwAddr config mask adv) = do
+    putWord16be portNo
+    put hwAddr
+    putWord32be $ enumToBitInst config
+    putWord32be $ enumToBitInst mask
+    putWord32be $ enumToBitInst adv
+    putWord32be 0 -- pad
+  get = do
+    portNo  <- getWord16be
+    hwAddr  <- get :: Get MAC
+    config' <- getWord32be
+    mask'   <- getWord32be
+    adv'    <- getWord32be
+    pad     <- getWord32be
+    let config = word32ToEnum config'
+    let mask   = word32ToEnum mask'
+    let adv    = word32ToEnum adv'
+    return $ OfpPortMod portNo hwAddr config mask adv
 
 putOfpErrorMsg ty code = do
   putWord16be ty
@@ -756,8 +815,10 @@ putOfpMsg (OfptGetConfigReply switchConfig) = put switchConfig
 putOfpMsg (OfptSetConfig switchConfig)      = put switchConfig
 putOfpMsg (OfptPacketIn packetIn)           = put packetIn
 putOfpMsg (OfptFlowRemoved flowRemoved)     = put flowRemoved
+putOfpMsg (OfptPortStatus portStatus)       = put portStatus
 putOfpMsg (OfptPacketOut packetOut)         = put packetOut
 putOfpMsg (OfptFlowMod flowMod)             = put flowMod
+putOfpMsg (OfptPortMod portMod)             = put portMod
 putOfpMsg (OfptBarrierRequest)              = putByteString BS.empty
 putOfpMsg (OfptBarrierReply)                = putByteString BS.empty
         
@@ -800,8 +861,10 @@ getOfpMsg (OfpHeader _ ty len _) =
     9 -> OfptSetConfig      <$> get
     10 -> OfptPacketIn      <$> get
     11 -> OfptFlowRemoved   <$> get
+    12 -> OfptPortStatus    <$> get
     13 -> OfptPacketOut     <$> get
     14 -> OfptFlowMod       <$> get
+    15 -> OfptPortMod       <$> get
     18 -> return OfptBarrierRequest
     19 -> return OfptBarrierReply
   where

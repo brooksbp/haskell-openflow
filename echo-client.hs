@@ -48,6 +48,8 @@ main = do
   bounce sock $ mkFrame (OfptPacketOut (OfpPacketOut 1 1 [(OfpOutput 1 1)] []))
   bounce sock $ mkFrame (OfptPacketOut (OfpPacketOut 1 1 [(OfpOutput 1 1), (OfpStripVlan)] [1,2]))
   bounce sock $ mkFrame (OfptFlowRemoved (OfpFlowRemoved m 0 4 OfprrIdleTimeout 1 2 3 4 5))
+  bounce sock $ mkFrame (OfptPortStatus (OfpPortStatus OfpprModify phyPort1))
+  bounce sock $ mkFrame (OfptPortMod (OfpPortMod 1 mac1 [OfppcPortDown] [OfppcNoFwd, OfppcNoStp] [Ofppf10MbHd]))
 
   sClose sock
 
