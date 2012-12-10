@@ -32,6 +32,10 @@ module Network.OpenFlow (
   , OfpPortStatus(..)
   , OfpPortReason(..)
   , OfpPortMod(..)
+  , OfpQueueGetConfigRequest(..)
+  , OfpQueueGetConfigReply(..)
+  , OfpPacketQueue(..)
+  , OfpQueueProp(..)
   , readOfpFrame
   ) where
 
@@ -109,37 +113,39 @@ data OfpMsg = OfptHello [Word8]
             | OfptPortMod OfpPortMod
             | OfptBarrierRequest
             | OfptBarrierReply
+            | OfptQueueGetConfigRequest OfpQueueGetConfigRequest
+            | OfptQueueGetConfigReply OfpQueueGetConfigReply
             deriving (Show)
 
 -- | Immutable messages
-msgType (OfptHello _)            = 0
-msgType (OfptError _)            = 1
-msgType (OfptEchoRequest _)      = 2
-msgType (OfptEchoReply _)        = 3
-msgType (OfptVendor)             = 4
+msgType (OfptHello _)                 = 0
+msgType (OfptError _)                 = 1
+msgType (OfptEchoRequest _)           = 2
+msgType (OfptEchoReply _)             = 3
+msgType (OfptVendor)                  = 4
 -- | Switch configuration messages
-msgType (OfptFeaturesRequest)    = 5
-msgType (OfptFeaturesReply _)    = 6
-msgType (OfptGetConfigRequest)   = 7
-msgType (OfptGetConfigReply _)   = 8
-msgType (OfptSetConfig _)        = 9
+msgType (OfptFeaturesRequest)         = 5
+msgType (OfptFeaturesReply _)         = 6
+msgType (OfptGetConfigRequest)        = 7
+msgType (OfptGetConfigReply _)        = 8
+msgType (OfptSetConfig _)             = 9
 -- | Asynchronous messages
-msgType (OfptPacketIn _)         = 10
-msgType (OfptFlowRemoved _)      = 11
-msgType (OfptPortStatus _)       = 12
+msgType (OfptPacketIn _)              = 10
+msgType (OfptFlowRemoved _)           = 11
+msgType (OfptPortStatus _)            = 12
 -- | Controller command messages
-msgType (OfptPacketOut _)        = 13
-msgType (OfptFlowMod _)          = 14
-msgType (OfptPortMod _)          = 15
+msgType (OfptPacketOut _)             = 13
+msgType (OfptFlowMod _)               = 14
+msgType (OfptPortMod _)               = 15
 -- | Statistics messages
 --msgType (OfptStatsRequest)       = 16
 --msgType (OfptStatsReply)         = 17
 -- | Barrier messages
-msgType (OfptBarrierRequest)     = 18
-msgType (OfptBarrierReply)       = 19
+msgType (OfptBarrierRequest)          = 18
+msgType (OfptBarrierReply)            = 19
 -- | Queue configuration messages
---msgType (OfptQueueGetConfigRequest)   = 20
---msgType (OfptQueueGetConfigReply)     = 21
+msgType (OfptQueueGetConfigRequest _) = 20
+msgType (OfptQueueGetConfigReply _)   = 21
 
 data OfpError = OfpetHelloFailed OfpHelloFailedCode String
               | OfpetBadRequest OfpBadRequestCode
@@ -777,6 +783,89 @@ instance Serialize OfpPortMod where
     let adv    = word32ToEnum adv'
     return $ OfpPortMod portNo hwAddr config mask adv
 
+data OfpQueueGetConfigRequest =
+  OfpQueueGetConfigRequest { qreqPort :: Word16
+                           } deriving (Show)
+
+instance Serialize OfpQueueGetConfigRequest where
+  put (OfpQueueGetConfigRequest port) = do
+    putWord16be port
+    putWord16be 0 -- pad
+  get = do
+    port <- getWord16be
+    pad  <- getWord16be
+    return $ OfpQueueGetConfigRequest port
+
+data OfpQueueGetConfigReply =
+  OfpQueueGetConfigReply { qrepPort :: Word16
+                         , queues   :: [OfpPacketQueue]
+                         } deriving (Show)
+
+instance Serialize OfpQueueGetConfigReply where
+  put (OfpQueueGetConfigReply port queues) = do
+    putWord16be port
+    putWord32be 0 -- pad
+    putWord16be 0 -- pad
+    mapM_ put queues
+  get = do
+    port <- getWord16be
+    pad1 <- getWord32be
+    pad2 <- getWord16be
+    rem  <- remaining
+    queuesBS <- getByteString rem
+    let queues = readMany queuesBS
+    return $ OfpQueueGetConfigReply port queues
+
+data OfpPacketQueue =
+  OfpPacketQueue { pqQueueId  :: Word32
+                 , properties :: [OfpQueueProp]
+                 } deriving (Show)
+
+instance Serialize OfpPacketQueue where
+  put (OfpPacketQueue qid props) = do
+    putWord32be qid
+    let props' = runPut (mapM_ put props)
+    let len = BS.length props'
+    put ((fromIntegral len) :: Word16)
+    putWord16be 0 -- pad
+    putByteString props'
+  get = do
+    qid <- getWord32be
+    len <- getWord16be
+    pad <- getWord16be
+    propsBS <- getByteString (fromIntegral len)
+    let props = readMany propsBS
+    return $ OfpPacketQueue qid props
+
+data OfpQueueProp = OfpqtNone
+                  | OfpqtMinRate Word16
+                  deriving (Show)
+
+instance Serialize OfpQueueProp where
+  put (OfpqtNone) = do
+    putWord16be 0
+    putWord16be 8
+    putWord32be 0 -- pad
+  put (OfpqtMinRate rate) = do
+    putWord16be 1
+    putWord16be 16
+    putWord32be 0 -- pad
+    putWord16be rate
+    putWord32be 0 -- pad
+    putWord16be 0 -- pad
+  get = do
+    property <- getWord16be
+    len      <- getWord16be
+    pad1     <- getWord32be
+    case property of
+      0 -> return OfpqtNone
+      1 -> do
+        rate <- getWord16be
+        pad2 <- getWord32be
+        pad3 <- getWord16be
+        return $ OfpqtMinRate rate
+
+
 putOfpErrorMsg ty code = do
   putWord16be ty
   putWord16be $ fromIntegral $ fromEnum code
@@ -821,6 +910,8 @@ putOfpMsg (OfptFlowMod flowMod)             = put flowMod
 putOfpMsg (OfptPortMod portMod)             = put portMod
 putOfpMsg (OfptBarrierRequest)              = putByteString BS.empty
 putOfpMsg (OfptBarrierReply)                = putByteString BS.empty
+putOfpMsg (OfptQueueGetConfigRequest qreq)  = put qreq
+putOfpMsg (OfptQueueGetConfigReply qrep)    = put qrep
         
 readMany :: (Serialize t) => BS.ByteString -> [t]
 readMany bs = case runGet (readMany' [] 0) bs of
@@ -867,6 +958,8 @@ getOfpMsg (OfpHeader _ ty len _) =
     15 -> OfptPortMod       <$> get
     18 -> return OfptBarrierRequest
     19 -> return OfptBarrierReply
+    20 -> OfptQueueGetConfigRequest <$> get
+    21 -> OfptQueueGetConfigReply <$> get
   where
     len' = fromIntegral len
     getMsg = liftM BS.unpack (getByteString (len' - ofpHdrLen))

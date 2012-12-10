@@ -50,6 +50,7 @@ main = do
   bounce sock $ mkFrame (OfptFlowRemoved (OfpFlowRemoved m 0 4 OfprrIdleTimeout 1 2 3 4 5))
   bounce sock $ mkFrame (OfptPortStatus (OfpPortStatus OfpprModify phyPort1))
   bounce sock $ mkFrame (OfptPortMod (OfpPortMod 1 mac1 [OfppcPortDown] [OfppcNoFwd, OfppcNoStp] [Ofppf10MbHd]))
+  bounce sock $ mkFrame (OfptQueueGetConfigReply (OfpQueueGetConfigReply 1 [(OfpPacketQueue 0 [OfpqtNone]), (OfpPacketQueue 1 [OfpqtNone, (OfpqtMinRate 550)])]))
 
   sClose sock
 
