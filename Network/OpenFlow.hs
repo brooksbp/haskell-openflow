@@ -27,6 +27,8 @@ module Network.OpenFlow (
   , OfpPacketIn(..)
   , OfpPacketInReason(..)
   , OfpPacketOut(..)
+  , OfpFlowRemoved(..)
+  , OfpFlowRemovedReason(..)
   , readOfpFrame
   ) where
 
@@ -87,14 +89,9 @@ instance Serialize OfpHeader where
     return $ OfpHeader version ty len xid
 
 data OfpMsg = OfptHello [Word8]
-              -- 5.5.1 Implementations must be prepared to receive a
-              -- Hello message that includes a body, ignoring its contents.
             | OfptError OfpError
             | OfptEchoRequest [Word8]
-              -- 5.5.2 Echo Request may or may not include a data field.
             | OfptEchoReply [Word8]
-              -- 5.5.3 An Echo Reply consist of the unmodified data field of an
-              -- Echo Request message.
             | OfptVendor
             | OfptFeaturesRequest
             | OfptFeaturesReply OfpSwitchFeatures
@@ -102,6 +99,7 @@ data OfpMsg = OfptHello [Word8]
             | OfptGetConfigReply OfpSwitchConfig
             | OfptSetConfig OfpSwitchConfig
             | OfptPacketIn OfpPacketIn
+            | OfptFlowRemoved OfpFlowRemoved
             | OfptPacketOut OfpPacketOut
             | OfptFlowMod OfpFlowMod
             | OfptBarrierRequest
@@ -122,7 +120,7 @@ msgType (OfptGetConfigReply _)   = 8
 msgType (OfptSetConfig _)        = 9
 -- | Asynchronous messages
 msgType (OfptPacketIn _)         = 10
---msgType (OfptFlowRemoved)        = 11
+msgType (OfptFlowRemoved _)      = 11
 --msgType (OfptPortStatus)         = 12
 -- | Controller command messages
 msgType (OfptPacketOut _)        = 13
@@ -679,6 +677,47 @@ instance Serialize OfpPacketOut where
     let dat = BS.unpack dat'
     return $ OfpPacketOut bufferId inPort actions dat
 
+data OfpFlowRemoved =
+  OfpFlowRemoved { frMatch       :: OfpMatch
+                 , frCookie      :: Word64
+                 , frPriority    :: Word16
+                 , frReason      :: OfpFlowRemovedReason
+                 , durationSec   :: Word32
+                 , durationNSec  :: Word32
+                 , frIdleTimeout :: Word16
+                 , packetCount   :: Word64
+                 , byteCount     :: Word64
+                 } deriving (Show)
+
+instance Serialize OfpFlowRemoved where
+  put (OfpFlowRemoved match cookie pri reason sec nsec idleTO pCnt bCnt) = do
+    put match
+    putWord64be cookie
+    putWord16be pri
+    putWord8 $ fromIntegral $ fromEnum reason
+    putWord32be sec
+    putWord32be nsec
+    putWord16be idleTO
+    putWord64be pCnt
+    putWord64be bCnt
+  get = do
+    match   <- get :: Get OfpMatch    
+    cookie  <- getWord64be
+    pri     <- getWord16be
+    reason' <- liftM fromIntegral getWord8
+    let reason = toEnum reason' :: OfpFlowRemovedReason
+    sec     <- getWord32be
+    nsec    <- getWord32be
+    idleTO  <- getWord16be
+    pCnt    <- getWord64be
+    bCnt    <- getWord64be
+    return $ OfpFlowRemoved match cookie pri reason sec nsec idleTO pCnt bCnt
+
+data OfpFlowRemovedReason = OfprrIdleTimeout
+                          | OfprrHardTimeout
+                          | OfprrDelete
+                            deriving (Show, Enum)
+
 putOfpErrorMsg ty code = do
   putWord16be ty
   putWord16be $ fromIntegral $ fromEnum code
@@ -716,6 +755,7 @@ putOfpMsg (OfptGetConfigRequest)            = putByteString BS.empty
 putOfpMsg (OfptGetConfigReply switchConfig) = put switchConfig
 putOfpMsg (OfptSetConfig switchConfig)      = put switchConfig
 putOfpMsg (OfptPacketIn packetIn)           = put packetIn
+putOfpMsg (OfptFlowRemoved flowRemoved)     = put flowRemoved
 putOfpMsg (OfptPacketOut packetOut)         = put packetOut
 putOfpMsg (OfptFlowMod flowMod)             = put flowMod
 putOfpMsg (OfptBarrierRequest)              = putByteString BS.empty
@@ -759,6 +799,7 @@ getOfpMsg (OfpHeader _ ty len _) =
     8 -> OfptGetConfigReply <$> get
     9 -> OfptSetConfig      <$> get
     10 -> OfptPacketIn      <$> get
+    11 -> OfptFlowRemoved   <$> get
     13 -> OfptPacketOut     <$> get
     14 -> OfptFlowMod       <$> get
     18 -> return OfptBarrierRequest

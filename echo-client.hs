@@ -47,6 +47,7 @@ main = do
   bounce sock $ mkFrame (OfptBarrierRequest)
   bounce sock $ mkFrame (OfptPacketOut (OfpPacketOut 1 1 [(OfpOutput 1 1)] []))
   bounce sock $ mkFrame (OfptPacketOut (OfpPacketOut 1 1 [(OfpOutput 1 1), (OfpStripVlan)] [1,2]))
+  bounce sock $ mkFrame (OfptFlowRemoved (OfpFlowRemoved m 0 4 OfprrIdleTimeout 1 2 3 4 5))
 
   sClose sock
 
