@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Network.OpenFlow (
     OfpFrame(..)
   , OfpHeader(..)
@@ -83,7 +85,7 @@ data OfpHeader =
 ofpHdrLen = 8
 
 instance Serialize OfpHeader where
-  put (OfpHeader version ty len xid) = do
+  put (OfpHeader {..}) = do
     putWord8 version
     putWord8 ty
     putWord16be len
@@ -267,7 +269,7 @@ prependSpace xs 0 = xs
 prependSpace xs n = prependSpace (" " ++ xs) (n-1)
 
 instance Serialize OfpPhyPort where
-  put (OfpPhyPort portNo hwAddr name config state curr advertised supported peer) = do
+  put (OfpPhyPort {..}) = do
     putWord16be portNo
     put hwAddr
     putByteString $ C.pack $ prependSpace name (ofpMaxPortNameLen - (length name))
@@ -333,7 +335,7 @@ data OfpSwitchConfig =
                   } deriving (Show)
 
 instance Serialize OfpSwitchConfig where
-  put (OfpSwitchConfig flags missSendLen) = do
+  put (OfpSwitchConfig {..}) = do
     putWord16be $ enumToBitInst flags
     putWord16be missSendLen
   get = do
@@ -362,7 +364,7 @@ data OfpFlowMod =
              } deriving (Show)               
 
 instance Serialize OfpFlowMod where
-  put (OfpFlowMod match cookie command idleTimeout hardTimeout priority bufferId outPort flags actions) = do
+  put (OfpFlowMod {..}) = do
     put match
     putWord64be cookie
     putWord16be $ fromIntegral $ fromEnum command
@@ -371,8 +373,8 @@ instance Serialize OfpFlowMod where
     putWord16be priority
     putWord32be bufferId
     putWord16be outPort
-    putWord16be $ fromIntegral $ fromEnum flags
-    mapM_ put actions
+    putWord16be $ fromIntegral $ fromEnum fmFlags
+    mapM_ put fmActions
   get = do
     match       <- get :: Get OfpMatch
     cookie      <- getWord64be
@@ -556,7 +558,7 @@ data OfpMatch =
            } deriving (Show)
 
 instance Serialize OfpMatch where
-  put (OfpMatch wildcards inPort dlSrc dlDst dlVlan dlVlanPcp dlType nwTos nwProto nwSrc nwDst tpSrc tpDst) = do
+  put (OfpMatch {..}) = do
     putWord32be $ enumToBitInst wildcards
     putWord16be inPort
     put dlSrc
@@ -637,12 +639,12 @@ data OfpPacketIn =
               } deriving (Show)
 
 instance Serialize OfpPacketIn where
-  put (OfpPacketIn bufferId _ inPort reason dat) = do
+  put (OfpPacketIn {..}) = do
     let dat' = BS.pack dat
     let len  = BS.length dat'
-    putWord32be bufferId
+    putWord32be piBufferId
     put ((fromIntegral len) :: Word16)
-    putWord16be inPort
+    putWord16be piInPort
     putWord8 $ fromIntegral $ fromEnum reason
     putByteString dat'
   get = do
@@ -669,14 +671,14 @@ data OfpPacketOut =
                } deriving (Show)
 
 instance Serialize OfpPacketOut where
-  put (OfpPacketOut bufferId inPort actions dat) = do
-    putWord32be bufferId
-    putWord16be inPort
-    let actions' = runPut (mapM_ put actions)
+  put (OfpPacketOut {..}) = do
+    putWord32be poBufferId
+    putWord16be poInPort
+    let actions' = runPut (mapM_ put poActions)
     let len = BS.length actions'
     put ((fromIntegral len) :: Word16)
     putByteString actions'
-    putByteString $ BS.pack dat
+    putByteString $ BS.pack poDat
   get = do
     bufferId   <- getWord32be
     inPort     <- getWord16be
