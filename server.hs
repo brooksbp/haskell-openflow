@@ -59,7 +59,7 @@ handshake sock = do
   putStrLn $ "frame: " ++ show frame
   
   sendAll sock $ encode (OfpFrame (OfpHeader 1 0 0 2) (OfptFlowMod flowMod))
-  
+
 
 handleSwitch :: Socket -> SockAddr -> IO ()  
 handleSwitch sock caddr =
