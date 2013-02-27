@@ -1,9 +1,8 @@
 haskell-openflow
 ================
 
-OpenFlow v1.0.0 protocol implementation. (~60% complete)
+"OpenFlow enables networks to evolve, by giving a remote controller the power to modify the behavior of network devices, through a well-defined 'forwarding instruction set.'" 
 
-* echo-client.hs, echo-server.hs used to test serialization of data types.
-* server.hs example OpenFlow server / controller.
+OpenFlow v1.0.0 [1] protocol implementation in Haskell.
 
-cabal-install network-info cereal
+[1] http://www.openflow.org/documents/openflow-spec-v1.0.0.pdf
