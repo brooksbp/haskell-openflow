@@ -603,20 +603,45 @@ data OfpFlowWildcards = OfpfwInPort
                       | OfpfwNwProto
                       | OfpfwTpSrc
                       | OfpfwTpDst
-                      | OfpfwNwSrcShift
-                      | OfpfwNwSrcBits
-                      | OfpfwNwSrcMask
-                      | OfpfwNwSrcAll
+                      | OfpfwNwSrc -- incomplete! 6 bits
+                      | OfpfwNwDst -- incomplete! 6 bits
                       | OfpfwDlVlanPcp
                       | OfpfwNwTos
                       | OfpfwAll
-                      deriving (Show, Enum)
+                      deriving (Show)
 
-allWildcards = [ OfpfwInPort, OfpfwDlVlan, OfpfwDlSrc
-               , OfpfwDlDst, OfpfwDlType, OfpfwNwProto
-               , OfpfwTpSrc, OfpfwTpDst, OfpfwNwSrcShift
-               , OfpfwNwSrcBits, OfpfwNwSrcMask, OfpfwNwSrcAll
-               , OfpfwDlVlanPcp, OfpfwNwTos, OfpfwAll ]
+instance Enum OfpFlowWildcards where
+  fromEnum (OfpfwInPort)    = 0
+  fromEnum (OfpfwDlVlan)    = 1
+  fromEnum (OfpfwDlSrc)     = 2
+  fromEnum (OfpfwDlDst)     = 3
+  fromEnum (OfpfwDlType)    = 4
+  fromEnum (OfpfwNwProto)   = 5
+  fromEnum (OfpfwTpSrc)     = 6
+  fromEnum (OfpfwTpDst)     = 7
+  fromEnum (OfpfwNwSrc)     = 8
+  fromEnum (OfpfwNwDst)     = 14
+  fromEnum (OfpfwDlVlanPcp) = 20
+  fromEnum (OfpfwNwTos)     = 21
+  fromEnum (OfpfwAll)       = 22
+  toEnum 0  = (OfpfwInPort)
+  toEnum 1  = (OfpfwDlVlan)
+  toEnum 2  = (OfpfwDlSrc)
+  toEnum 3  = (OfpfwDlDst)
+  toEnum 4  = (OfpfwDlType)
+  toEnum 5  = (OfpfwNwProto)
+  toEnum 6  = (OfpfwTpSrc)
+  toEnum 7  = (OfpfwTpDst)
+  toEnum 8  = (OfpfwNwSrc)
+  toEnum 14 = (OfpfwNwDst)
+  toEnum 20 = (OfpfwDlVlanPcp)
+  toEnum 21 = (OfpfwNwTos)
+  toEnum 22 = (OfpfwAll)
+
+allWildcards = [ OfpfwInPort, OfpfwDlVlan, OfpfwDlSrc,
+                 OfpfwDlDst, OfpfwDlType, OfpfwNwProto,
+                 OfpfwTpSrc, OfpfwTpDst, OfpfwNwSrc, OfpfwNwDst,
+                 OfpfwDlVlanPcp, OfpfwNwTos, OfpfwAll ]
 
 data OfpFlowModCommand = OfpfcAdd
                        | OfpfcModify
