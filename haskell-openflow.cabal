@@ -11,8 +11,7 @@ license:             BSD3
 license-file:        LICENSE
 cabal-version:       >= 1.10
 build-type:          Simple
-extra-source-files:  examples/dump.hs
-                    ,examples/echo-client.hs
+extra-source-files:  examples/echo-client.hs
                     ,examples/echo-server.hs
                     ,examples/server.hs
 

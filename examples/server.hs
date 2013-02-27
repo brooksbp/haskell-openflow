@@ -51,11 +51,11 @@ handleSwitch sock caddr =
       (OfpFrame (OfpHeader _ _ _ xid) (OfptEchoRequest dat)) -> do
         let resp = (OfpFrame (OfpHeader 1 0 0 xid) (OfptEchoReply dat))
         sendAll sock $ encode resp
-        putStrLn "TX: " ++ show resp
-      (OfpFrame (OfpHeader _ _ _ xid) (OfptPacketIn (OfpPacketIn bid len inp reason dat))) ->
+        putStrLn $ "TX: " ++ show resp
+      (OfpFrame (OfpHeader _ _ _ xid) (OfptPacketIn (OfpPacketIn bid len inp reason dat))) -> do
         let resp = (OfpFrame (OfpHeader 1 0 0 xid) (OfptPacketOut (OfpPacketOut bid inp [(OfpOutput 6 0)] dat)))
         sendAll sock $ encode resp
-        putStrLn "TX: " ++ show resp
+        putStrLn $ "TX: " ++ show resp
       _ -> putStrLn " UNHANDLED"
 
 
