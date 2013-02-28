@@ -1,7 +1,7 @@
 module Main where
 
-import System.Exit (exitFailure)
+import System.Exit
 
 main = do
-  putStrLn "This test always fails!"
-  exitFailure
+  putStrLn "Woot!"
+  exitSuccess
