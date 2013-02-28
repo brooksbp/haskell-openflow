@@ -1,7 +1,8 @@
 name:                haskell-openflow
 version:             0.0.0.1
-synopsis:            OpenFlow protocol
-description:         OpenFlow protocol
+synopsis:            OpenFlow protocol in Haskell
+description:         OpenFlow assists in network virtualization where multiple
+                     isolated logical networks can share physical hardware.
 category:            Network
 author:              Brian Brooks
 maintainer:          brooks.brian@gmail.com

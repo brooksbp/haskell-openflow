@@ -1,5 +1,10 @@
 {-# LANGUAGE RecordWildCards #-}
 
+{- | [Haskell OpenFlow]
+
+This is an implementation of OpenFlow in Haskell.
+
+-}
 module Network.OpenFlow (
     OfpFrame(..)
   , OfpHeader(..)
