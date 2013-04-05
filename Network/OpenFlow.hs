@@ -676,6 +676,7 @@ instance Serialize OfpPacketIn where
     put ((fromIntegral len) :: Word16)
     putWord16be piInPort
     putWord8 $ fromIntegral $ fromEnum reason
+    putWord8 0 -- pad
     putByteString dat'
   get = do
     bufferId <- getWord32be
@@ -683,6 +684,7 @@ instance Serialize OfpPacketIn where
     inPort   <- getWord16be
     reason'  <- liftM fromIntegral getWord8
     let reason = toEnum reason' :: OfpPacketInReason
+    pad0 <- getWord8
     rem  <- remaining
     -- assert(rem == totalLen)
     dat' <- getByteString rem
