@@ -904,7 +904,7 @@ putOfpErrorMsg ty code = do
   putWord16be ty
   putWord16be $ fromIntegral $ fromEnum code
 
-enumToBitInst :: (Enum a, Bits b) => [a] -> b
+enumToBitInst :: (Enum a, Bits b, Num b) => [a] -> b
 enumToBitInst xs = f xs 0
   where
     f xs' w = foldl (\ w x -> w `setBit` fromEnum x) w xs
