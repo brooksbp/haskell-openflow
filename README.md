@@ -1,12 +1,8 @@
-haskell-openflow
-================
+## haskell-openflow
 
 [![Build Status](https://travis-ci.org/brooksbp/haskell-openflow.png?branch=master)](https://travis-ci.org/brooksbp/haskell-openflow)
 
-OpenFlow v1.0.0 protocol [1] implementation in Haskell.
-
-* "OpenFlow enables networks to evolve, by giving a remote controller the power to modify the behavior of network devices, through a well-defined 'forwarding instruction set.'" [2]
-* "The OpenFlow protocol, which ONF is standardizing, increases network functionality while lowering operating costs through simplified hardware, software, and management." [3]
+OpenFlow v1.0.0 protocol ( http://www.openflow.org/documents/openflow-spec-v1.0.0.pdf ) implementation in Haskell.
 
 Example OpenFlow server:
 
@@ -25,9 +21,10 @@ handleSwitch sock caddr =
       _ -> putStrLn "unhandled packet"
 ```
 
-[1] http://www.openflow.org/documents/openflow-spec-v1.0.0.pdf
+Quickstart:
 
-[2] http://www.openflow.org/
-
-[3] https://www.opennetworking.org/
-
+```bash
+$ cabal sandbox init
+$ cabal install --only-dependencies
+$ cabal build
+```
