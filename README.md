@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/brooksbp/haskell-openflow.png?branch=master)](https://travis-ci.org/brooksbp/haskell-openflow)
 
-OpenFlow v1.0.0 protocol ( http://www.openflow.org/documents/openflow-spec-v1.0.0.pdf ) implementation in Haskell.
+OpenFlow v1.0.0 protocol implementation in Haskell.  https://www.opennetworking.org/images/stories/downloads/sdn-resources/onf-specifications/openflow/openflow-spec-v1.0.0.pdf
 
 Example OpenFlow server:
 
