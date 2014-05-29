@@ -25,6 +25,6 @@ Quickstart:
 
 ```bash
 $ cabal sandbox init
-$ cabal install --only-dependencies
+$ cabal install --only-dependencies --enable-tests
 $ cabal build
 ```
