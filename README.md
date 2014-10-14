@@ -1,3 +1,7 @@
+NOTE: `new` branch undergoing development. Use `master` branch if you want stable.
+
+---
+
 ## haskell-openflow
 
 [![Build Status](https://travis-ci.org/brooksbp/haskell-openflow.png?branch=master)](https://travis-ci.org/brooksbp/haskell-openflow)
