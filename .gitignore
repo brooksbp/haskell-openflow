@@ -1,12 +1,3 @@
-dist
-cabal-dev
-*.o
-*.hi
-*.chi
-*.chs.h
-.virthualenv
-testing
-
-echo-server
-echo-client
-server
+dist/
+.cabal-sandbox/
+cabal.sandbox.config
