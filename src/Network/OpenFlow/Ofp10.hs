@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Network.OpenFlow
+-- Module      :  Network.OpenFlow.Ofp10
 -- Copyright   :  (C) 2014 Brian Brooks
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -11,7 +11,7 @@
 -- Portability :  non-portable
 --
 --------------------------------------------------------------------------------
-module Network.OpenFlow
+module Network.OpenFlow.Ofp10
   (
   -- * Messages
     OfpFrame(..)
@@ -41,9 +41,9 @@ module Network.OpenFlow
 
     -- * Re-exports
     -- $reexports
-  , module Network.OpenFlow.Flow
-  , module Network.OpenFlow.Port
-  , module Network.OpenFlow.Queue
+  , module Network.OpenFlow.Ofp10.Flow
+  , module Network.OpenFlow.Ofp10.Port
+  , module Network.OpenFlow.Ofp10.Queue
   ) where
 
 import Control.Applicative
@@ -55,9 +55,9 @@ import Data.Bits
 import Data.Maybe
 import Data.Tuple
 import Network.MAC
-import Network.OpenFlow.Flow
-import Network.OpenFlow.Port
-import Network.OpenFlow.Queue
+import Network.OpenFlow.Ofp10.Flow
+import Network.OpenFlow.Ofp10.Port
+import Network.OpenFlow.Ofp10.Queue
 
 #ifdef HLINT
 {-# ANN module "HLint: ignore Use import/export shortcut" #-}

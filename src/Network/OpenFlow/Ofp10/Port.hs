@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Network.OpenFlow.Port
+-- Module      :  Network.OpenFlow.Ofp10.Port
 -- Copyright   :  (C) 2014 Brian Brooks
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -9,7 +9,7 @@
 -- Portability :  non-portable
 --
 --------------------------------------------------------------------------------
-module Network.OpenFlow.Port
+module Network.OpenFlow.Ofp10.Port
   (
   -- * Ports
     OfpPhyPort(..)

@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Network.OpenFlow.Flow
+-- Module      :  Network.OpenFlow.Ofp10.Flow
 -- Copyright   :  (C) 2014 Brian Brooks
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -9,7 +9,7 @@
 -- Portability :  non-portable
 --
 --------------------------------------------------------------------------------
-module Network.OpenFlow.Flow
+module Network.OpenFlow.Ofp10.Flow
   (
   -- * Flows
     OfpMatch(..)

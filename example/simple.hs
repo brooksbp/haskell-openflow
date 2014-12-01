@@ -8,7 +8,7 @@ import qualified Data.ByteString.Lazy as BS
 import Network.Socket hiding (send, sendTo, recv, recvFrom)
 import Network.Socket.ByteString.Lazy
 import Prelude hiding (getContents)
-import Network.OpenFlow
+import Network.OpenFlow.Ofp10
 import GHC.Int
 
 main :: IO ()

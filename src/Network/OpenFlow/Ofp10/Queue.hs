@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Network.OpenFlow.Queue
+-- Module      :  Network.OpenFlow.Ofp10.Queue
 -- Copyright   :  (C) 2014 Brian Brooks
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -9,7 +9,7 @@
 -- Portability :  non-portable
 --
 --------------------------------------------------------------------------------
-module Network.OpenFlow.Queue
+module Network.OpenFlow.Ofp10.Queue
   (
   -- * Queues
     OfpPacketQueue(..)
