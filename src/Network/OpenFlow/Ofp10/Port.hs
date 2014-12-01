@@ -5,8 +5,8 @@
 -- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  Brian Brooks <brooks.brian@gmail.com>
--- Stability   :  provisional
--- Portability :  non-portable
+-- Stability   :  experimental
+-- Portability :  unknown
 --
 --------------------------------------------------------------------------------
 module Network.OpenFlow.Ofp10.Port
