@@ -1,14 +1,8 @@
-NOTE: `new` branch undergoing development. Use `master` branch if you want stable.
+> NOTE: Undergoing development. See `master` branch for stable.
 
----
+## haskell-openflow [![Build Status](https://travis-ci.org/brooksbp/haskell-openflow.png?branch=master)](https://travis-ci.org/brooksbp/haskell-openflow)
 
-## haskell-openflow
-
-[![Build Status](https://travis-ci.org/brooksbp/haskell-openflow.png?branch=master)](https://travis-ci.org/brooksbp/haskell-openflow)
-
-OpenFlow v1.0.0 protocol implementation in Haskell.  https://www.opennetworking.org/images/stories/downloads/sdn-resources/onf-specifications/openflow/openflow-spec-v1.0.0.pdf
-
-Example OpenFlow server:
+Example server:
 
 ```haskell
 handleSwitch :: Socket -> SockAddr -> IO ()
@@ -32,3 +26,8 @@ $ cabal sandbox init
 $ cabal install --only-dependencies --enable-tests
 $ cabal build
 ```
+
+References:
+
+* [OpenFlow Switch Specification 1.3.4](https://www.opennetworking.org/images/stories/downloads/sdn-resources/onf-specifications/openflow/openflow-switch-v1.3.4.pdf) (Mar. 27, 2014)
+* [OpenFlow Switch Specification 1.0.0](https://www.opennetworking.org/images/stories/downloads/sdn-resources/onf-specifications/openflow/openflow-spec-v1.0.0.pdf) (Dec. 31, 2009)
