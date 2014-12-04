@@ -39,11 +39,24 @@ module Network.OpenFlow.Ofp10
   , OfpPortModFailedCode(..)
   , OfpQueueOpFailedCode(..)
 
-    -- * Re-exports
-    -- $reexports
-  , module Network.OpenFlow.Ofp10.Flow
-  , module Network.OpenFlow.Ofp10.Port
-  , module Network.OpenFlow.Ofp10.Queue
+  -- * Flows
+  , OfpMatch(..)
+  , OfpFlowWildcards(..)
+  , OfpActionType(..)
+  , OfpAction(..)
+
+  -- * Ports
+  , OfpPhyPort(..)
+  , OfpPortConfig(..)
+  , OfpPortState(..)
+  , OfpPort
+  , OfpPortFeatures(..)
+
+  -- * Queues
+  , OfpPacketQueue(..)
+  , OfpQueueProperties(..)
+  , OfpQueueProp(..)
+
   ) where
 
 import Control.Applicative
@@ -55,9 +68,6 @@ import Data.Bits
 import Data.Maybe
 import Data.Tuple
 import Network.MAC
-import Network.OpenFlow.Ofp10.Flow
-import Network.OpenFlow.Ofp10.Port
-import Network.OpenFlow.Ofp10.Queue
 
 #ifdef HLINT
 {-# ANN module "HLint: ignore Use import/export shortcut" #-}
@@ -434,3 +444,246 @@ data OfpQueueOpFailedCode =
   | OfpqofcBadQueue
   | OfpqofcEperm
   deriving (Enum, Eq, Show)
+
+data OfpMatch = OfpMatch
+  { wildcards :: !Word32
+  , inPort''  :: !Word16
+  , dlSrc     :: !MAC
+  , dlDst     :: !MAC
+  , dlVlan    :: !Word16
+  , dlVlanPcp :: !Word8
+  , dlType    :: !Word16
+  , nwTos     :: !Word8
+  , nwProto   :: !Word8
+  , nwSrc     :: !Word32
+  , nwDst     :: !Word32
+  , tpSrc     :: !Word16
+  , tpDst     :: !Word16
+  } deriving (Eq, Show)
+
+
+data OfpFlowWildcards =
+    OfpfwInPort
+  | OfpFwDlVlan
+  | OfpFwDlSrc
+  | OfpFwDlDst
+  | OfpFwDlType
+  | OfpFwNwProto
+  | OfpFwTpSrc
+  | OfpFwTpDst
+  | OfpFwNwSrcShift
+  | OfpFwNwSrcBits
+  | OfpFwNwSrcMask
+  | OfpFwNwSrcAll
+  | OfpFwNwDstShift
+  | OfpFwNwDstBits
+  | OfpFwNwDstMask
+  | OfpFwNwDstAll
+  | OfpFwDlVlanPcp
+  | OfpFwNwTos
+  | OfpFwAll
+  deriving (Eq, Show)
+
+ofpfwTable :: [(OfpFlowWildcards, Int)]
+ofpfwTable = [
+    (OfpfwInPort,     1 `shiftL` 0)
+  , (OfpFwDlVlan,     1 `shiftL` 1)
+  , (OfpFwDlSrc,      1 `shiftL` 2)
+  , (OfpFwDlDst,      1 `shiftL` 3)
+  , (OfpFwDlType,     1 `shiftL` 4)
+  , (OfpFwNwProto,    1 `shiftL` 5)
+  , (OfpFwTpSrc,      1 `shiftL` 6)
+  , (OfpFwTpDst,      1 `shiftL` 7)
+  , (OfpFwNwSrcShift, 8)
+  , (OfpFwNwSrcBits,  6)
+  , (OfpFwNwSrcMask,  ((1 `shiftL` 6) - 1) `shiftL` 8)
+  , (OfpFwNwSrcAll,   32 `shiftL` 8)
+  , (OfpFwNwDstShift, 14)
+  , (OfpFwNwDstBits,  6)
+  , (OfpFwNwDstMask,  ((1 `shiftL` 6) - 1) `shiftL` 14)
+  , (OfpFwNwDstAll,   32 `shiftL` 14)
+  , (OfpFwDlVlanPcp,  1 `shiftL` 20)
+  , (OfpFwNwTos,      1 `shiftL` 21)
+  , (OfpFwAll,        (1 `shiftL` 22) - 1)
+  ]
+
+instance Enum OfpFlowWildcards where
+  fromEnum = fromJust . flip lookup ofpfwTable
+  toEnum = fromJust . flip lookup (map swap ofpfwTable)
+
+
+data OfpActionType =
+    OfpatOutput
+  | OfpatSetVlanVid
+  | OfpatSetVlanPcp
+  | OfpatStripVlan
+  | OfpatSetDlSrc
+  | OfpatSetDlDst
+  | OfpatSetNwSrc
+  | OfpatSetNwDst
+  | OfpatSetNwTos
+  | OfpatSetTpSrc
+  | OfpatSetTpDst
+  | OfpatEnqueue
+  | OfpatVendor  -- ^ FIXME: fromEnum ==> 0xffff
+  deriving (Enum, Eq, Show)
+
+-- | Enumeration of actions
+data OfpAction =
+    OfpActionOutput {
+        port'  :: !Word16
+      , maxLen :: !Word16
+      }
+  | OfpActionEnqueue {
+        port''   :: !Word16
+      , queueId' :: !Word32
+      }
+  | OfpActionVlanVid { vlanVid :: !Word16 }
+  | OfpActionVlanPcp { vlanPcp :: !Word8 }
+  | OfpActionStripVlan
+  | OfpActionSetDlSrc { dlAddr :: !MAC }
+  | OfpActionSetDlDst { dlAddr' :: !MAC }
+  | OfpActionSetNwSrc { nwAddr :: !Word32 }
+  | OfpActionSetNwDst { nwAddr' :: !Word32 }
+  | OfpActionSetNwTos { nwTos' :: !Word8 }
+  | OfpActionSetTpSrc { tpPort :: !Word16 }
+  | OfpActionSetTpDst { tpPort' :: !Word16 }
+  | OfpActionVendor { vendor' :: !Word32 }
+  deriving (Eq, Show)
+
+
+data OfpPhyPort = OfpPhyPort
+  { portNo'    :: !Word16
+  , hwAddr'    :: !MAC
+  , name       :: [Word8]
+  , config'    :: [OfpPortConfig]
+  , state      :: [OfpPortState]
+  , curr       :: [OfpPortFeatures]
+  , advertised :: [OfpPortFeatures]
+  , supported  :: [OfpPortFeatures]
+  , peer       :: [OfpPortFeatures]
+  } deriving (Eq, Show)
+
+
+data OfpPortConfig =
+    OfppcPortDown
+  | OfppcNoStp
+  | OfppcNoRecv
+  | OfppcNoRecvStp
+  | OfppcNoFlood
+  | OfppcNoFwd
+  | OfppcNoPacketIn
+  deriving (Eq, Show)
+
+ofppcTable :: [(OfpPortConfig, Int)]
+ofppcTable = [
+    (OfppcPortDown,   1 `shiftL` 0)
+  , (OfppcNoStp,      1 `shiftL` 1)
+  , (OfppcNoRecv,     1 `shiftL` 2)
+  , (OfppcNoRecvStp,  1 `shiftL` 3)
+  , (OfppcNoFlood,    1 `shiftL` 4)
+  , (OfppcNoFwd,      1 `shiftL` 5)
+  , (OfppcNoPacketIn, 1 `shiftL` 6)
+  ]
+
+instance Enum OfpPortConfig where
+  fromEnum = fromJust . flip lookup ofppcTable
+  toEnum = fromJust . flip lookup (map swap ofppcTable)
+
+
+data OfpPortState =
+    OfppsLinkDown
+  | OfppsStpListen
+  | OfppsStpLearn
+  | OfppsStpForward
+  | OfppsStpBlock
+  | OfppsStpMask
+  deriving (Eq, Show)
+
+ofppsTable :: [(OfpPortState, Int)]
+ofppsTable = [
+    (OfppsLinkDown,   1 `shiftL` 0)
+  , (OfppsStpListen,  0 `shiftL` 8)
+  , (OfppsStpLearn,   1 `shiftL` 8)
+  , (OfppsStpForward, 2 `shiftL` 8)
+  , (OfppsStpBlock,   3 `shiftL` 8)
+  , (OfppsStpMask,    3 `shiftL` 8)
+  ]
+
+instance Enum OfpPortState where
+  fromEnum = fromJust . flip lookup ofppsTable
+  toEnum = fromJust . flip lookup (map swap ofppsTable)
+
+
+-- FIXME: convert this to above style
+type OfpPort = Word16
+
+ofppMax, ofppInPort, ofppTable, ofppNormal, ofppFlood, ofppAll, ofppController, ofppLocal, ofppNone :: OfpPort
+
+-- | Maximum number of physical switch ports.
+ofppMax = 0xff00
+
+-- | Fake output "ports".
+ofppInPort     = 0xfff8  -- ^ Send the packet out the input port.
+ofppTable      = 0xfff9  -- ^ Perform actions in flow table. Packet out only.
+ofppNormal     = 0xfffa  -- ^ Process with normal L2/L3 switching.
+ofppFlood      = 0xfffb  -- ^ All physical ports except input port and those disabled by STP.
+ofppAll        = 0xfffc  -- ^ All physical ports except input port.
+ofppController = 0xfffd  -- ^ Send to controller.
+ofppLocal      = 0xfffe  -- ^ Local openflow "port".
+ofppNone       = 0xffff  -- ^ Not associated with a physical port.
+
+
+data OfpPortFeatures =
+    Ofppf10MbHd
+  | Ofppf10MbFd
+  | Ofppf100MbHd
+  | Ofppf100MbFd
+  | Ofppf1GbHd
+  | Ofppf1GbFd
+  | Ofppf10GbFd
+  | OfppfCopper
+  | OfppfFiber
+  | OfppfAutoneg
+  | OfppfPause
+  | OfppfPauseAsym
+  deriving (Eq, Show)
+
+ofppfTable :: [(OfpPortFeatures, Int)]
+ofppfTable = [
+    (Ofppf10MbHd,    1 `shiftL` 0)
+  , (Ofppf10MbFd,    1 `shiftL` 1)
+  , (Ofppf100MbHd,   1 `shiftL` 2)
+  , (Ofppf100MbFd,   1 `shiftL` 3)
+  , (Ofppf1GbHd,     1 `shiftL` 4)
+  , (Ofppf1GbFd,     1 `shiftL` 5)
+  , (Ofppf10GbFd,    1 `shiftL` 6)
+  , (OfppfCopper,    1 `shiftL` 7)
+  , (OfppfFiber,     1 `shiftL` 8)
+  , (OfppfAutoneg,   1 `shiftL` 9)
+  , (OfppfPause,     1 `shiftL` 10)
+  , (OfppfPauseAsym, 1 `shiftL` 11)
+  ]
+    
+instance Enum OfpPortFeatures where
+  fromEnum = fromJust . flip lookup ofppfTable
+  toEnum = fromJust . flip lookup (map swap ofppfTable)
+
+
+
+data OfpPacketQueue = OfpPacketQueue
+  { queueId     :: !Word32
+  , len'        :: !Word16
+  , qProperties :: [OfpQueueProp]
+  } deriving (Eq, Show)
+
+data OfpQueueProperties =
+    OfpqtNone
+  | OfpqtMinRate
+  deriving (Enum, Eq, Show)
+
+data OfpQueueProp =
+  OfpQueuePropMinRate {
+    rate :: !Word16
+    }
+  deriving (Eq, Show)

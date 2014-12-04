@@ -25,9 +25,6 @@ library
   exposed-modules:
     Network.MAC
     Network.OpenFlow.Ofp10
-    Network.OpenFlow.Ofp10.Flow
-    Network.OpenFlow.Ofp10.Port
-    Network.OpenFlow.Ofp10.Queue
     Network.OpenFlow.Ofp13
     Network.OpenFlow.Util
 
