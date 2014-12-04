@@ -10,6 +10,7 @@
 -- Stability   :  experimental
 -- Portability :  unknown
 --
+-- OpenFlow Switch Specification Version 1.3.4
 --------------------------------------------------------------------------------
 module Network.OpenFlow.Ofp13
   (
@@ -21,7 +22,7 @@ import Network.MAC
 
 data OfpFrame = OfpFrame
   { header  :: !OfpHeader
-  , message :: () -- !OfpMessage
+  , message :: OfpMessage
   } deriving (Show,Eq)
 
 -- | 7.1.1 OpenFlow Header
@@ -66,6 +67,137 @@ data OfpType =
   | OfptSetAsync
   | OfptMeterMod
   deriving (Show,Eq)
+
+data OfpMessage =
+    OfpSwitchFeatures {
+      sfDataPathId   :: !Word64
+    , sfNBuffers     :: !Word32
+    , sfNTables      :: !Word8
+    , sfAuxiliaryId  :: !Word8
+    , sfCapabilities :: [OfpCapabilities]
+    , sfReserved     :: !Word32
+    }
+  | OfpSwitchConfig {
+      scFlags        :: [Ofpc*]
+    , scMissSendLen  :: !Word16
+    }
+  | OfpTableMod {
+      tmTableId      :: !Word8
+    , tmConfig       :: [Ofptc*]
+    }
+  | OfpFlowMod {
+      fmCookie       :: !Word64
+    , fmCookieMask   :: !Word64
+    , fmTableId      :: !Word8
+    , fmCommand      :: Ofpfc*
+    , fmIdleTimeout  :: !Word16
+    , fmHardTimeout  :: !Word16
+    , fmPriority     :: !Word16
+    , fmBufferId     :: !Word32
+    , fmOutPort      :: !Word32
+    , fmOutGroup     :: !Word32
+    , fmFlags        :: [Ofpff*]
+    , fmMatch        :: [OfpMatch*]
+    , fmInstructions :: [OfpInstruction*]
+    }
+  | OfpGroupMod {
+      gmCommand :: Ofpgc*
+    , gmType    :: Ofpgt*
+    , gmGroupId :: !Word32
+    , gmBuckets :: [OfpBucket*]
+    }
+  | OfpPortMod {
+      pmPortNo    :: !Word32
+    , pmHwAddr    :: !MAC
+    , pmConfig    :: [Ofppc*]
+    , pmMask      :: [Ofppc*]
+    , pmAdvertise :: [Ofppf*]
+    }
+  | OfpMeterMod {
+      mmCommand :: Ofpmc*
+    , mmFlags   :: [Ofpmf*]
+    , mmMeterId :: !Word32
+    , mmBands   :: [OfpMeterBand*]
+    }
+  | OfpMultipartRequest {
+      mpReqType  :: Ofpmp*
+    , mpReqFlags :: [OfpmpfReq*]
+    , mpReqBody  :: [Word8]
+    }
+  | OfpMultipartReply {
+      mpRepType  :: Ofpmp*
+    , mpRepFlags :: [OfpmpfRep*]
+    , mpRepBody  :: [Word8]
+    }
+  | OfpQueueGetConfigRequest {
+      qReqPort   :: !Word32
+    }
+  | OfpQueueGetConfigReply {
+      qRepPort   :: !Word32
+    , qRepQueues :: [OfpPacketQueue*]
+    }
+  | OfpPacketOut {
+      poBufferId   :: !Word32
+    , poInPort     :: !Word32
+    , poActionsLen :: !Word16
+    , poActions    :: [OfpAction*]
+    , poData       :: [Word8]
+    }
+  | OfpRoleRequest {
+      rReqRole         :: Ofpcr*
+    , rReqGenerationId :: !Word64
+    }
+  | OfpAsyncConfig {
+      acPacketInMask    :: [Ofpr*]
+    , acPortStatusMask  :: [Ofppr*]
+    , acFlowRemovedMask :: [Ofprr*]
+    }
+  | OfpPacketIn {
+      piBufferId :: !Word32
+    , piTotalLen :: !Word16
+    , piReason   :: Ofpr*
+    , piTableId  :: !Word8
+    , piCookie   :: !Word64
+    , piMatch    :: [OfpMatch*]
+    , piData     :: [Word8]
+    }
+  | OfpFlowRemoved {
+      frCookie       :: !Word64
+    , frPriority     :: !Word16
+    , frReason       :: Ofprr*
+    , frTableId      :: !Word8
+    , frDurationSec  :: !Word32
+    , frDurationNSec :: !Word32
+    , frIdleTimeout  :: !Word16
+    , frHardTimeout  :: !Word16
+    , frPacketCount  :: !Word64
+    , frByteCount    :: !Word64
+    , frMatch        :: OfpMatch*
+    }
+  | OfpPortStatus {
+      psReason :: Ofppr*
+    , psDesc   :: OfpPort*
+    }
+  | OfpErrorMsg {
+      eType :: !Word16
+    , eCode :: !Word16
+    , eData :: [Word8]
+    }
+  | OfpErrorExperimenterMsg {
+      eeType         :: !Word16
+    , eeExpType      :: !Word16
+    , eeExperimenter :: !Word32
+    , eeData         :: [Word8]
+    }
+  | OfpHello {
+      hElements :: [OfpHelloElem*]
+    }
+  | OfpExperimenterHeader {
+      ehExperimenter :: !Word32
+    , ehExpType      :: !Word32
+    , ehData         :: [Word8]
+    }
+  deriving (Show, Eq)
 
 
 -- | 7.2.1 Port Structures
@@ -292,3 +424,4 @@ data OfpInstructionType =
 -- | 7.5.2 Echo Request
 -- | 7.5.3 Echo Reply
 -- | 7.5.4 Experimenter
+
