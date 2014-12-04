@@ -135,96 +135,98 @@ instance Binary OfpType where
 -- | Enumeration of messages
 data OfpMessage =
     OfpSwitchFeatures {
-        datapathId   :: !Word64
-      , nBuffers     :: !Word32
-      , nTables      :: !Word8
-      , capabilities :: [OfpCapabilities]
-      , actionTypes  :: [OfpActionType]
-      , ports        :: [OfpPhyPort]
+        sfDatapathId   :: !Word64
+      , sfNBuffers     :: !Word32
+      , sfNTables      :: !Word8
+      , sfCapabilities :: [OfpCapabilities]
+      , sfActionTypes  :: [OfpActionType]
+      , sfPorts        :: [OfpPhyPort]
       }
   | OfpSwitchConfig {
-        flags        :: [OfpConfigFlags]
-      , missSendLen  :: !Word16
+        scFlags        :: [OfpConfigFlags]
+      , scMissSendLen  :: !Word16
       }
   | OfpFlowMod {
-        match        :: !OfpMatch
-      , cookie       :: !Word64
-      , command      :: !OfpFlowModCommand
-      , idleTimeout  :: !Word16
-      , hardTimeout  :: !Word16
-      , priority     :: !Word16
-      , bufferId     :: !Word32
-      , outPort      :: !Word16
-      , flags'       :: !OfpFlowModFlags
-      , actions      :: [OfpAction]
+        fmMatch        :: !OfpMatch
+      , fmCookie       :: !Word64
+      , fmCommand      :: !OfpFlowModCommand
+      , fmIdleTimeout  :: !Word16
+      , fmHardTimeout  :: !Word16
+      , fmPriority     :: !Word16
+      , fmBufferId     :: !Word32
+      , fmOutPort      :: !Word16
+      , fmFlags        :: !OfpFlowModFlags
+      , fmActions      :: [OfpAction]
       }
   | OfpPortMod {
-        portNo       :: !Word16
-      , hwAddr       :: !MAC
-      , config       :: [OfpPortConfig]
-      , mask         :: [OfpPortConfig]
-      , advertise    :: [OfpPortFeatures]
+        pmPortNo       :: !Word16
+      , pmHwAddr       :: !MAC
+      , pmConfig       :: [OfpPortConfig]
+      , pmMask         :: [OfpPortConfig]
+      , pmAdvertise    :: [OfpPortFeatures]
       }
   | OfpQueueGetConfigRequest {
-        port         :: !Word16
+        qgcReqPort     :: !Word16
       }
   | OfpQueueGetConfigReply {
-        port         :: !Word16
-      , queues       :: [OfpPacketQueue]
+        qgcRepPort     :: !Word16
+      , qgcRepQueues   :: [OfpPacketQueue]
       }
   | OfpStatsRequest {
-        ty'          :: !OfpStatsTypes
-      , flags''      :: () -- ^ FIXME: undefined??
-      , body         :: !OfpRequestStats
+        sReqTy         :: !OfpStatsTypes
+      , sReqFlags      :: () -- ^ FIXME: undefined??
+      , sReqBody       :: !OfpRequestStats
       }
   | OfpStatsReply {
-        ty''         :: !OfpStatsTypes
-      , flags'''     :: () -- ^ FIXME: undefined??
-      , body'        :: [OfpReplyStats]
+        sRepTy         :: !OfpStatsTypes
+      , sRepFlags      :: () -- ^ FIXME: undefined??
+      , sRepBody       :: [OfpReplyStats]
       }
   | OfpPacketOut {
-        bufferId     :: !Word32
-      , inPort       :: !Word16
-      , actionsLen   :: !Word16
-      , actions      :: [OfpAction]
-      , packet       :: [Word8]
+        poBufferId     :: !Word32
+      , poInPort       :: !Word16
+      , poActionsLen   :: !Word16
+      , poActions      :: [OfpAction]
+      , poPacket       :: [Word8]
       }
   | OfpPacketIn {
-        bufferId'    :: !Word32
-      , totalLen     :: !Word16
-      , inPort'      :: !Word16
-      , reason       :: !OfpPacketInReason
-      , packet       :: [Word8]
+        piBufferId     :: !Word32
+      , piTotalLen     :: !Word16
+      , piInPort       :: !Word16
+      , piReason       :: !OfpPacketInReason
+      , piPacket       :: [Word8]
       }
   | OfpFlowRemoved {
-        match'       :: !OfpMatch
-      , cookie       :: !Word64
-      , priority     :: !Word16
-      , reason'      :: !OfpFlowRemovedReason
-      , durationSec  :: !Word32
-      , durationNsec :: !Word32
-      , idleTimeout  :: !Word16
-      , packetCount  :: !Word64
-      , byteCount    :: !Word64
+        frMatch        :: !OfpMatch
+      , frCookie       :: !Word64
+      , frPriority     :: !Word16
+      , frReason       :: !OfpFlowRemovedReason
+      , frDurationSec  :: !Word32
+      , frDurationNsec :: !Word32
+      , frIdleTimeout  :: !Word16
+      , frPacketCount  :: !Word64
+      , frByteCount    :: !Word64
       }
   | OfpPortStatus {
-        reason''     :: !OfpPortReason
-      , desc         :: !OfpPhyPort
+        psReason       :: !OfpPortReason
+      , psDesc         :: !OfpPhyPort
       }
   | OfpErrorMsg {
-        error' :: !OfpError
-      , data'  :: [Word8]
+        eError :: !OfpError
+      , eData  :: [Word8]
       }
   | OfpVendorHeader {
-        vendor       :: !Word32
-      , data'        :: [Word8]
+        vVendor :: !Word32
+      , vData   :: [Word8]
       }
   | Body [Word8]
   deriving (Eq, Show)
 
+-- TODO
 getOfpMessage :: OfpType -> Word16 -> Get OfpMessage
 getOfpMessage t l = return $! Body []
 
+-- TODO
 putOfpMessage :: OfpMessage -> Put
 putOfpMessage _ = putWord8 0
 
@@ -288,81 +290,81 @@ data OfpStatsTypes =
 
 data OfpRequestStats =
     OfpFlowStatsRequest {
-        match''  :: !OfpMatch
-      , tableId  :: !Word8
-      , outPort' :: !Word16
+        fsrMatch   :: !OfpMatch
+      , fsrTableId :: !Word8
+      , fsrOutPort :: !Word16
       }
   | OfpAggregateStatsRequest {
-        match'''' :: !OfpMatch
-      , tableId'' :: !Word8
-      , outPort'' :: !Word16
+        asReqMatch   :: !OfpMatch
+      , asReqTableId :: !Word8
+      , asReqOutPort :: !Word16
       }
   | OfpPortStatsRequest {
-        portNo'' :: !Word16
+        psReqPortNo :: !Word16
       }
   | OfpQueueStatsRequest {
-        portNo''' :: !Word16
-      , queueId'' :: !Word32
+        qsReqPortNo  :: !Word16
+      , qsReqQueueId :: !Word32
       }
   deriving (Eq, Show)
 
 data OfpReplyStats =
     OfpDescStats {
-        mfrDesc   :: [Word8]
-      , hwDesc    :: [Word8]
-      , swDesc    :: [Word8]
-      , serialNum :: [Word8]
-      , dpDesc    :: [Word8]
+        dsMfrDesc   :: [Word8]
+      , dsHwDesc    :: [Word8]
+      , dsSwDesc    :: [Word8]
+      , dsSerialNum :: [Word8]
+      , dsDpDesc    :: [Word8]
       }
   | OfpFlowStats {
-        length        :: !Word16
-      , tableId'      :: !Word8
-      , match'''      :: !OfpMatch
-      , durationSec'  :: !Word32
-      , durationNsec' :: !Word32
-      , priority'     :: !Word16
-      , idleTimeout'  :: !Word16
-      , hardTimeout'  :: !Word16
-      , cookie'       :: !Word64
-      , packetCount'  :: !Word64
-      , byteCount'    :: !Word64
-      , actions'      :: [OfpAction]
+        fsLength       :: !Word16
+      , fsTableId      :: !Word8
+      , fsMatch        :: !OfpMatch
+      , fsDurationSec  :: !Word32
+      , fsDurationNsec :: !Word32
+      , fsPriority     :: !Word16
+      , fsIdleTimeout  :: !Word16
+      , fsHardTimeout  :: !Word16
+      , fsCookie       :: !Word64
+      , fsPacketCount  :: !Word64
+      , fsByteCount    :: !Word64
+      , fsActions      :: [OfpAction]
       }
   | OfpAggregateStatsReply {
-        packetCount'' :: !Word64
-      , byteCount''   :: !Word64
-      , flowCount     :: !Word32
+        asRepPacketCount :: !Word64
+      , asRepByteCount   :: !Word64
+      , asRepFlowCount   :: !Word32
       }
   | OfpTableStats {
-        tableId'''   :: !Word8
-      , name'        :: [Word8]
-      , wildcards'   :: [OfpFlowWildcards]
-      , maxEntries   :: !Word32
-      , activeCount  :: !Word32
-      , lookupCount  :: !Word64
-      , matchedCount :: !Word64
+        tsTableId      :: !Word8
+      , tsName         :: [Word8]
+      , tsWildcards    :: [OfpFlowWildcards]
+      , tsMaxEntries   :: !Word32
+      , tsActiveCount  :: !Word32
+      , tsLookupCount  :: !Word64
+      , tsMatchedCount :: !Word64
       }
   | OfpPortStats {
-        portNo'''' :: !Word16
-      , rxPackets  :: !Word64
-      , txPackets  :: !Word64
-      , rxBytes    :: !Word64
-      , txBytes    :: !Word64
-      , rxDropped  :: !Word64
-      , txDropped  :: !Word64
-      , rxErrors   :: !Word64
-      , txErrors   :: !Word64
-      , rxFrameErr :: !Word64
-      , rxOverErr  :: !Word64
-      , rxCrcErr   :: !Word64
-      , collisions :: !Word64
+        psPortNo     :: !Word16
+      , psRxPackets  :: !Word64
+      , psTxPackets  :: !Word64
+      , psRxBytes    :: !Word64
+      , psTxBytes    :: !Word64
+      , psRxDropped  :: !Word64
+      , psTxDropped  :: !Word64
+      , psRxErrors   :: !Word64
+      , psTxErrors   :: !Word64
+      , psRxFrameErr :: !Word64
+      , psRxOverErr  :: !Word64
+      , psRxCrcErr   :: !Word64
+      , psCollisions :: !Word64
       }
   | OfpQueueStats {
-        portNo''''' :: !Word16
-      , queueId'''  :: !Word32
-      , txBytes'    :: !Word64
-      , txPackets'  :: !Word64
-      , txErrors'   :: !Word64
+        qsPortNo    :: !Word16
+      , qsQueueId   :: !Word32
+      , qsTxBytes   :: !Word64
+      , qsTxPackets :: !Word64
+      , qsTxErrors  :: !Word64
       }
   deriving (Eq, Show)
 
@@ -446,19 +448,19 @@ data OfpQueueOpFailedCode =
   deriving (Enum, Eq, Show)
 
 data OfpMatch = OfpMatch
-  { wildcards :: !Word32
-  , inPort''  :: !Word16
-  , dlSrc     :: !MAC
-  , dlDst     :: !MAC
-  , dlVlan    :: !Word16
-  , dlVlanPcp :: !Word8
-  , dlType    :: !Word16
-  , nwTos     :: !Word8
-  , nwProto   :: !Word8
-  , nwSrc     :: !Word32
-  , nwDst     :: !Word32
-  , tpSrc     :: !Word16
-  , tpDst     :: !Word16
+  { mWildcards :: !Word32
+  , mInPort    :: !Word16
+  , mDlSrc     :: !MAC
+  , mDlDst     :: !MAC
+  , mDlVlan    :: !Word16
+  , mDlVlanPcp :: !Word8
+  , mDlType    :: !Word16
+  , mNwTos     :: !Word8
+  , mNwProto   :: !Word8
+  , mNwSrc     :: !Word32
+  , mNwDst     :: !Word32
+  , mTpSrc     :: !Word16
+  , mTpDst     :: !Word16
   } deriving (Eq, Show)
 
 
@@ -531,37 +533,37 @@ data OfpActionType =
 -- | Enumeration of actions
 data OfpAction =
     OfpActionOutput {
-        port'  :: !Word16
-      , maxLen :: !Word16
+        aoPort   :: !Word16
+      , aoMaxLen :: !Word16
       }
   | OfpActionEnqueue {
-        port''   :: !Word16
-      , queueId' :: !Word32
+        aePort    :: !Word16
+      , aeQueueId :: !Word32
       }
-  | OfpActionVlanVid { vlanVid :: !Word16 }
-  | OfpActionVlanPcp { vlanPcp :: !Word8 }
+  | OfpActionVlanVid { aVlanVid :: !Word16 }
+  | OfpActionVlanPcp { aVlanPcp :: !Word8 }
   | OfpActionStripVlan
-  | OfpActionSetDlSrc { dlAddr :: !MAC }
-  | OfpActionSetDlDst { dlAddr' :: !MAC }
-  | OfpActionSetNwSrc { nwAddr :: !Word32 }
-  | OfpActionSetNwDst { nwAddr' :: !Word32 }
-  | OfpActionSetNwTos { nwTos' :: !Word8 }
-  | OfpActionSetTpSrc { tpPort :: !Word16 }
-  | OfpActionSetTpDst { tpPort' :: !Word16 }
-  | OfpActionVendor { vendor' :: !Word32 }
+  | OfpActionSetDlSrc { aDlSrcAddr :: !MAC }
+  | OfpActionSetDlDst { aDlDstAddr :: !MAC }
+  | OfpActionSetNwSrc { aNwSrcAddr :: !Word32 }
+  | OfpActionSetNwDst { aNwDstAddr :: !Word32 }
+  | OfpActionSetNwTos { aNwTos     :: !Word8 }
+  | OfpActionSetTpSrc { aTpSrcPort :: !Word16 }
+  | OfpActionSetTpDst { aTpDstPort :: !Word16 }
+  | OfpActionVendor { aVendor :: !Word32 }
   deriving (Eq, Show)
 
 
 data OfpPhyPort = OfpPhyPort
-  { portNo'    :: !Word16
-  , hwAddr'    :: !MAC
-  , name       :: [Word8]
-  , config'    :: [OfpPortConfig]
-  , state      :: [OfpPortState]
-  , curr       :: [OfpPortFeatures]
-  , advertised :: [OfpPortFeatures]
-  , supported  :: [OfpPortFeatures]
-  , peer       :: [OfpPortFeatures]
+  { ppPortNo     :: !Word16
+  , ppHwAddr     :: !MAC
+  , ppName       :: [Word8]
+  , ppConfig     :: [OfpPortConfig]
+  , ppState      :: [OfpPortState]
+  , ppCurr       :: [OfpPortFeatures]
+  , ppAdvertised :: [OfpPortFeatures]
+  , ppSupported  :: [OfpPortFeatures]
+  , ppPeer       :: [OfpPortFeatures]
   } deriving (Eq, Show)
 
 
@@ -672,9 +674,9 @@ instance Enum OfpPortFeatures where
 
 
 data OfpPacketQueue = OfpPacketQueue
-  { queueId     :: !Word32
-  , len'        :: !Word16
-  , qProperties :: [OfpQueueProp]
+  { pqQueueId     :: !Word32
+  , pqLen        :: !Word16
+  , pqProperties :: [OfpQueueProp]
   } deriving (Eq, Show)
 
 data OfpQueueProperties =
@@ -684,6 +686,6 @@ data OfpQueueProperties =
 
 data OfpQueueProp =
   OfpQueuePropMinRate {
-    rate :: !Word16
+    qpRate :: !Word16
     }
   deriving (Eq, Show)
