@@ -14,6 +14,25 @@
 --------------------------------------------------------------------------------
 module Network.OpenFlow.Ofp13
   (
+  -- * Messages
+    OfpFrame(..)
+  , OfpHeader(..)
+  , OfpType(..)
+  , OfpMessage(..)
+
+  -- * Port Structures
+  -- | Ports are numbered starting from 1.
+  , OfpPortNo
+  , ofppMax
+  , ofppInPort
+  , ofppTable
+  , ofppNormal
+  , ofppFlood
+  , ofppAll
+  , ofppController
+  , ofppLocal
+  , ofppAny
+
   ) where
 
 import Data.Bits
@@ -22,7 +41,7 @@ import Network.MAC
 
 data OfpFrame = OfpFrame
   { header  :: !OfpHeader
-  , message :: OfpMessage
+  , message :: !OfpMessage
   } deriving (Show,Eq)
 
 -- | 7.1.1 OpenFlow Header
@@ -31,102 +50,112 @@ ofp13Version :: Int
 ofp13Version = 0x04
 
 data OfpHeader = OfpHeader
-  { version :: !Word8
+  { version :: !Word8   -- ^ OpenFlow protocol version.
   , ty      :: !OfpType
   , len     :: !Word16
-  , xid     :: !Word32
+  , xid     :: !Word32  -- ^ Transaction id associated with this packet. Replies use the same id as was in the request to facilitate pairing.
   } deriving (Show,Eq)
 
 data OfpType =
+  -- | Immutable messages.
     OfptHello
   | OfptError
   | OfptEchoRequest
   | OfptEchoReply
   | OfptExperimenter
+  -- | Switch configuration messages.
   | OfptFeaturesRequest
   | OfptFeaturesReply
   | OfptSetConfig
+  -- | Asynchronous messages.
   | OfptPacketIn
   | OfptFlowRemoved
   | OfptPortStatus
+  -- | Controller command messages.
   | OfptPacketOut
   | OfptFlowMod
   | OfptGroupMod
   | OfptPortMod
   | OfptTableMod
+  -- | Multipart messages.
   | OfptMultipartRequest
   | OfptMultipartReply
+  -- | Barrier messages.
   | OfptBarrierRequest
   | OfptBarrierReply
+  -- | Queue configuration messages.
   | OfptQueueGetConfigRequest
   | OfptQueueGetConfigReply
+  -- | Controller role change request messages.
   | OfptRoleRequest
   | OfptRoleReply
+  -- | Asynchronous message configuration.
   | OfptGetAsyncRequest
   | OfptGetAsyncReply
   | OfptSetAsync
+  -- | Meters and rate limiters configuration messages.
   | OfptMeterMod
   deriving (Show,Eq)
 
 data OfpMessage =
     OfpSwitchFeatures {
-      sfDataPathId   :: !Word64
-    , sfNBuffers     :: !Word32
-    , sfNTables      :: !Word8
+      sfDataPathId   :: !Word64 -- ^ Datapath unique ID. The lower 48-bits are for a MAC address, while the upper 16-bits are implementer-defined.
+    , sfNBuffers     :: !Word32 -- ^ Max packets buffered at once.
+    , sfNTables      :: !Word8  -- ^ Number of tables suppoerted by datapath.
     , sfAuxiliaryId  :: !Word8
-    , sfCapabilities :: [OfpCapabilities]
+    , sfCapabilities :: () -- [OfpCapabilities]
     , sfReserved     :: !Word32
     }
   | OfpSwitchConfig {
-      scFlags        :: [Ofpc*]
+      scFlags        :: () --[Ofpc*]
     , scMissSendLen  :: !Word16
     }
   | OfpTableMod {
       tmTableId      :: !Word8
-    , tmConfig       :: [Ofptc*]
+    , tmConfig       :: () -- [Ofptc*]
     }
   | OfpFlowMod {
       fmCookie       :: !Word64
     , fmCookieMask   :: !Word64
     , fmTableId      :: !Word8
-    , fmCommand      :: Ofpfc*
+    , fmCommand      :: () -- Ofpfc*
     , fmIdleTimeout  :: !Word16
     , fmHardTimeout  :: !Word16
     , fmPriority     :: !Word16
     , fmBufferId     :: !Word32
     , fmOutPort      :: !Word32
     , fmOutGroup     :: !Word32
-    , fmFlags        :: [Ofpff*]
-    , fmMatch        :: [OfpMatch*]
-    , fmInstructions :: [OfpInstruction*]
+    , fmFlags        :: () -- [Ofpff*]
+    , fmMatch        :: () -- [OfpMatch*]
+    , fmInstructions :: () -- [OfpInstruction*]
     }
   | OfpGroupMod {
-      gmCommand :: Ofpgc*
-    , gmType    :: Ofpgt*
+      gmCommand :: () -- Ofpgc*
+    , gmType    :: () -- Ofpgt*
     , gmGroupId :: !Word32
-    , gmBuckets :: [OfpBucket*]
+    , gmBuckets :: () -- [OfpBucket*]
     }
   | OfpPortMod {
       pmPortNo    :: !Word32
     , pmHwAddr    :: !MAC
-    , pmConfig    :: [Ofppc*]
-    , pmMask      :: [Ofppc*]
-    , pmAdvertise :: [Ofppf*]
+    , pmConfig    :: () -- [Ofppc*]
+    , pmMask      :: () -- [Ofppc*]
+    , pmAdvertise :: () -- [Ofppf*]
     }
   | OfpMeterMod {
-      mmCommand :: Ofpmc*
-    , mmFlags   :: [Ofpmf*]
+      mmCommand :: () -- Ofpmc*
+    , mmFlags   :: () -- [Ofpmf*]
     , mmMeterId :: !Word32
-    , mmBands   :: [OfpMeterBand*]
+    , mmBands   :: () -- [OfpMeterBand*]
     }
   | OfpMultipartRequest {
-      mpReqType  :: Ofpmp*
-    , mpReqFlags :: [OfpmpfReq*]
+      mpReqType  :: () -- Ofpmp*
+    , mpReqFlags :: () -- [OfpmpfReq*]
     , mpReqBody  :: [Word8]
     }
   | OfpMultipartReply {
-      mpRepType  :: Ofpmp*
-    , mpRepFlags :: [OfpmpfRep*]
+      mpRepType  :: () -- Ofpmp*
+    , mpRepFlags :: () -- [OfpmpfRep*]
     , mpRepBody  :: [Word8]
     }
   | OfpQueueGetConfigRequest {
@@ -134,37 +163,37 @@ data OfpMessage =
     }
   | OfpQueueGetConfigReply {
       qRepPort   :: !Word32
-    , qRepQueues :: [OfpPacketQueue*]
+    , qRepQueues :: () -- [OfpPacketQueue*]
     }
   | OfpPacketOut {
       poBufferId   :: !Word32
     , poInPort     :: !Word32
     , poActionsLen :: !Word16
-    , poActions    :: [OfpAction*]
+    , poActions    :: () -- [OfpAction*]
     , poData       :: [Word8]
     }
   | OfpRoleRequest {
-      rReqRole         :: Ofpcr*
+      rReqRole         :: () -- Ofpcr*
     , rReqGenerationId :: !Word64
     }
   | OfpAsyncConfig {
-      acPacketInMask    :: [Ofpr*]
-    , acPortStatusMask  :: [Ofppr*]
-    , acFlowRemovedMask :: [Ofprr*]
+      acPacketInMask    :: () -- [Ofpr*]
+    , acPortStatusMask  :: () -- [Ofppr*]
+    , acFlowRemovedMask :: () -- [Ofprr*]
     }
   | OfpPacketIn {
       piBufferId :: !Word32
     , piTotalLen :: !Word16
-    , piReason   :: Ofpr*
+    , piReason   :: () -- Ofpr*
     , piTableId  :: !Word8
     , piCookie   :: !Word64
-    , piMatch    :: [OfpMatch*]
+    , piMatch    :: () -- [OfpMatch*]
     , piData     :: [Word8]
     }
   | OfpFlowRemoved {
       frCookie       :: !Word64
     , frPriority     :: !Word16
-    , frReason       :: Ofprr*
+    , frReason       :: () -- Ofprr*
     , frTableId      :: !Word8
     , frDurationSec  :: !Word32
     , frDurationNSec :: !Word32
@@ -172,11 +201,11 @@ data OfpMessage =
     , frHardTimeout  :: !Word16
     , frPacketCount  :: !Word64
     , frByteCount    :: !Word64
-    , frMatch        :: OfpMatch*
+    , frMatch        :: () -- OfpMatch*
     }
   | OfpPortStatus {
-      psReason :: Ofppr*
-    , psDesc   :: OfpPort*
+      psReason :: () -- Ofppr*
+    , psDesc   :: () -- OfpPort*
     }
   | OfpErrorMsg {
       eType :: !Word16
@@ -190,7 +219,7 @@ data OfpMessage =
     , eeData         :: [Word8]
     }
   | OfpHello {
-      hElements :: [OfpHelloElem*]
+      hElements :: () -- [OfpHelloElem*]
     }
   | OfpExperimenterHeader {
       ehExperimenter :: !Word32
@@ -200,18 +229,34 @@ data OfpMessage =
   deriving (Show, Eq)
 
 
--- | 7.2.1 Port Structures
+type OfpPortNo = Word32
 
 -- | Maxiumum number of physical and logical switch ports.
+ofppMax :: OfpPortNo
 ofppMax = 0xffffff00
-
+-- | Send the packet out the input port. This reserved port must be explicitly used in order to send back out of the input port.
+ofppInPort :: OfpPortNo
 ofppInPort = 0xfffffff8
+-- | Submit the packet to the first flow table NB: This destination port can only be used in packet-out messages.
+ofppTable :: OfpPortNo
 ofppTable = 0xfffffff9
+-- | Forward using non-OpenFlow pipeline.
+ofppNormal :: OfpPortNo
 ofppNormal = 0xfffffffa
+-- | Flood using non-OpenFlow pipeline.
+ofppFlood :: OfpPortNo
 ofppFlood = 0xfffffffb
+-- | All standard ports except input port.
+ofppAll :: OfpPortNo
 ofppAll = 0xfffffffc
+-- | Send to controller.
+ofppController :: OfpPortNo
 ofppController = 0xfffffffd
+-- | Local openflow "port".
+ofppLocal :: OfpPortNo
 ofppLocal = 0xfffffffe
+-- | Special value used in some requets when no port is specified (i.e. wildcarded).
+ofppAny :: OfpPortNo
 ofppAny = 0xffffffff
 
 data OfpPort = OfpPort

@@ -626,14 +626,14 @@ ofppMax, ofppInPort, ofppTable, ofppNormal, ofppFlood, ofppAll, ofppController, 
 ofppMax = 0xff00
 
 -- | Fake output "ports".
-ofppInPort     = 0xfff8  -- ^ Send the packet out the input port.
-ofppTable      = 0xfff9  -- ^ Perform actions in flow table. Packet out only.
-ofppNormal     = 0xfffa  -- ^ Process with normal L2/L3 switching.
-ofppFlood      = 0xfffb  -- ^ All physical ports except input port and those disabled by STP.
-ofppAll        = 0xfffc  -- ^ All physical ports except input port.
-ofppController = 0xfffd  -- ^ Send to controller.
-ofppLocal      = 0xfffe  -- ^ Local openflow "port".
-ofppNone       = 0xffff  -- ^ Not associated with a physical port.
+ofppInPort     = 0xfff8
+ofppTable      = 0xfff9
+ofppNormal     = 0xfffa
+ofppFlood      = 0xfffb
+ofppAll        = 0xfffc
+ofppController = 0xfffd
+ofppLocal      = 0xfffe
+ofppNone       = 0xffff
 
 
 data OfpPortFeatures =
