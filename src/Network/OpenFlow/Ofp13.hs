@@ -15,7 +15,15 @@
 module Network.OpenFlow.Ofp13
   (
   -- * Messages
-    OfpFrame(..)
+  -- | The OpenFlow protocol is implemented using OpenFlow messages transmitted
+  -- over the OpenFlow channel. Each message type is described by a specific
+  -- structure, which starts with the common OpenFlow header, and the message
+  -- structure may include other structures which may be common to multiple
+  -- message types.
+    encodeMsg
+  , decodeMsg
+  , ofpVersion
+  , OfpFrame(..)
   , OfpHeader(..)
   , OfpType(..)
   , OfpMessage(..)
@@ -33,22 +41,57 @@ module Network.OpenFlow.Ofp13
   , ofppLocal
   , ofppAny
 
+  -- * Handshake
+  , OfpCapabilities(..)
+  -- * Switch Configuration
+  , OfpConfigFlags(..)
+  -- * Flow Table Configuration
+  , OfpTable(..)
+  , OfpTableConfig(..)
+  -- * Modify State Messages
+  , OfpFlowModCommand(..)
+  , OfpFlowModFlags(..)
+  , OfpGroupModCommand(..)
+  , OfpGroupType(..)
+  -- * Multipart Messages
+  -- * Queue Configuration Messages
+  -- * Packet-Out Message
+  -- * Barrier Message
+  -- * Role Request Message
+  -- * Set Asynchronous Configuration Message
+  -- * Packet-In Message
+  -- * Flow Removed Message
+  -- * Port Status Message
+  -- * Error Message
+  -- * Hello
+  -- * Echo Request
+  -- * Echo Reply
+  -- * Experimenter
+
   ) where
 
-import Data.Bits
 import GHC.Word
 import Network.MAC
+import Data.ByteString.Lazy
 
+
+encodeMsg :: OfpFrame -> ByteString
+encodeMsg _ = error "TODO"
+
+decodeMsg :: ByteString -> OfpFrame
+decodeMsg _ = error "TODO"
+
+-- | Fundamental type of an OpenFlow message.
 data OfpFrame = OfpFrame
   { header  :: !OfpHeader
   , message :: !OfpMessage
   } deriving (Show,Eq)
 
--- | 7.1.1 OpenFlow Header
+-- | OpenFlow version 1.3.4.
+ofpVersion :: Int
+ofpVersion = 0x04
 
-ofp13Version :: Int
-ofp13Version = 0x04
-
+-- | Header type.
 data OfpHeader = OfpHeader
   { version :: !Word8   -- ^ OpenFlow protocol version.
   , ty      :: !OfpType
@@ -56,6 +99,7 @@ data OfpHeader = OfpHeader
   , xid     :: !Word32  -- ^ Transaction id associated with this packet. Replies use the same id as was in the request to facilitate pairing.
   } deriving (Show,Eq)
 
+-- | Message type type.
 data OfpType =
   -- | Immutable messages.
     OfptHello
@@ -97,41 +141,42 @@ data OfpType =
   | OfptMeterMod
   deriving (Show,Eq)
 
+-- | Message type.
 data OfpMessage =
     OfpSwitchFeatures {
       sfDataPathId   :: !Word64 -- ^ Datapath unique ID. The lower 48-bits are for a MAC address, while the upper 16-bits are implementer-defined.
     , sfNBuffers     :: !Word32 -- ^ Max packets buffered at once.
     , sfNTables      :: !Word8  -- ^ Number of tables suppoerted by datapath.
-    , sfAuxiliaryId  :: !Word8
-    , sfCapabilities :: () -- [OfpCapabilities]
+    , sfAuxiliaryId  :: !Word8  -- ^ Identify auxiliary connections.
+    , sfCapabilities :: [OfpCapabilities]
     , sfReserved     :: !Word32
     }
   | OfpSwitchConfig {
-      scFlags        :: () --[Ofpc*]
-    , scMissSendLen  :: !Word16
+      scFlags        :: [OfpConfigFlags]
+    , scMissSendLen  :: !Word16 -- ^ Max bytes of packet that datapath should send to the controller.
     }
   | OfpTableMod {
-      tmTableId      :: !Word8
-    , tmConfig       :: () -- [Ofptc*]
+      tmTableId      :: !Word8  -- ^ ID of the table.
+    , tmConfig       :: [OfpTableConfig]
     }
   | OfpFlowMod {
-      fmCookie       :: !Word64
-    , fmCookieMask   :: !Word64
-    , fmTableId      :: !Word8
-    , fmCommand      :: () -- Ofpfc*
-    , fmIdleTimeout  :: !Word16
-    , fmHardTimeout  :: !Word16
-    , fmPriority     :: !Word16
-    , fmBufferId     :: !Word32
-    , fmOutPort      :: !Word32
+      fmCookie       :: !Word64  -- ^ Opaque controller-issued identifier.
+    , fmCookieMask   :: !Word64  -- ^ Mask used to restrict the cookie bits that must match when the command is OFPFC_MODIFY* or OFPFC_DELETE*. A value of 0 indicates no restriction.
+    , fmTableId      :: !Word8   -- ^ ID of the table to put the flow in.
+    , fmCommand      :: OfpFlowModCommand
+    , fmIdleTimeout  :: !Word16  -- ^ Idle time before discarding (seconds).
+    , fmHardTimeout  :: !Word16  -- ^ Max time before discarding (seconds).
+    , fmPriority     :: !Word16  -- ^ Priority level of flow entry.
+    , fmBufferId     :: !Word32  -- ^ Buffered packet to apply to, or OFP_NO_BUFFER.
+    , fmOutPort      :: !Word32  -- ^ For OFPFC_DELETE* commands, require matching entries to include this as an output port. A value of 'ofppAny' indicates no restriction.
     , fmOutGroup     :: !Word32
-    , fmFlags        :: () -- [Ofpff*]
+    , fmFlags        :: [OfpFlowModFlags]
     , fmMatch        :: () -- [OfpMatch*]
     , fmInstructions :: () -- [OfpInstruction*]
     }
   | OfpGroupMod {
-      gmCommand :: () -- Ofpgc*
-    , gmType    :: () -- Ofpgt*
+      gmCommand :: OfpGroupModCommand
+    , gmType    :: OfpGroupType
     , gmGroupId :: !Word32
     , gmBuckets :: () -- [OfpBucket*]
     }
@@ -228,6 +273,7 @@ data OfpMessage =
     }
   deriving (Show, Eq)
 
+-- Common ...
 
 type OfpPortNo = Word32
 
@@ -441,32 +487,101 @@ data OfpInstructionType =
 --     , iaTy        :: 
 --                           }
 
--- | 7.2.5 Action Structures
+-- 7.2.5 Action Structures
 
--- | 7.3 Controller-to-Switch Messages
+-- 7.3 Controller-to-Switch Messages
 
--- | 7.3.1 Handshake
--- | 7.3.2 Switch Configuration
--- | 7.3.3 Flow Table Configuration
--- | 7.3.4 Modify State Messages
--- | 7.3.5 Multipart Messages
--- | 7.3.6 Queue Configuration Messages
--- | 7.3.7 Packet-Out Message
--- | 7.3.8 Barrier Message
--- | 7.3.9 Role Request Message
--- | 7.3.10 Set Asynchronous Configuration Message
+-- 7.3.1 Handshake
 
--- | 7.4 Asynchronous Messages
+-- | Capabilities supported by the datapath.
+data OfpCapabilities =
+    OfpcFlowStats
+  | OfpcTableStats
+  | OfpcPortStats
+  | OfpcGroupStats
+  | OfpcIpReassm
+  | OfpcQueueStats
+  | OfpcPortBlocked
+  deriving (Eq, Show)
 
--- | 7.4.1 Packet-In Message
--- | 7.4.2 Flow Removed Message
--- | 7.4.3 Port Status Message
--- | 7.4.4 Error Message
+-- 7.3.2 Switch Configuration
 
--- | 7.5 Symmetric Messages
+-- | Configuration flags.
+data OfpConfigFlags =
+    OfpcFragNormal  -- ^ No special handling for fragments.
+  | OfpcFragDrop    -- ^ Drop fragments.
+  | OfpcFragReasm   -- ^ Reassemble (only if 'OfpcIpReasm' set).
+  | OfpcFragMask
+  deriving (Eq, Show)
 
--- | 7.5.1 Hello
--- | 7.5.2 Echo Request
--- | 7.5.3 Echo Reply
--- | 7.5.4 Experimenter
+-- 7.3.3 Flow Table Configuration
+
+-- | Table numbering. Tables can use any number up to 'OfpttMax'.
+data OfpTable =
+    OfpttMax  -- ^ Last usable table number.
+  | OfpttAll  -- ^ Wildcard table used for table config, flow stats and flow deletes.
+  deriving (Eq, Show)
+
+-- | Flags to configure the table. Reserved for future use.
+data OfpTableConfig =
+  OfptcDeprecatedMask  -- ^ Deprecated bits
+  deriving (Eq, Show)
+
+-- 7.3.4 Modify State Messages
+
+-- | Flow mod commands.
+data OfpFlowModCommand =
+    OfpfcAdd           -- ^ New flow.
+  | OfpfcModify        -- ^ Modify all matching flows.
+  | OfpfcModifyStrict  -- ^ Modify entry strictly matching wildcards and priority.
+  | OfpfcDelete        -- ^ Delete all matching flows.
+  | OfpfcDeleteStrict  -- ^ Delete entry strictly matching wildcards and priority.
+  deriving (Enum, Eq, Show)
+
+-- | Flow mod flags.
+data OfpFlowModFlags =
+    OfpffSendFlowRem   -- ^ Send flow removed message when flow expires or is deleted.
+  | OfpffCheckOverlap  -- ^ Check for overlapping entries first.
+  | OfpffResetCounts   -- ^ Reset flow packet and byte counts.
+  | OfpffNoPktCounts   -- ^ Don't keep track of packet count.
+  | OfpffNoBytCounts   -- ^ Don't keep track of byte count.
+  deriving (Eq, Show)
+
+-- | Group commands.
+data OfpGroupModCommand =
+    OfpgcAdd     -- ^ New group.
+  | OfpgcModify  -- ^ Modify all matching groups.
+  | OfpgcDelete  -- ^ Delete all matching groups.
+  deriving (Enum, Eq, Show)
+
+-- | Group types. Values in the range [128, 255] are reserved for experimental use.
+data OfpGroupType =
+    OfpgtAll       -- ^ All (multicast/broadcast) group.
+  | OfpgtSelect    -- ^ Select group.
+  | OfpgtIndirect  -- ^ Indirect group.
+  | OfpgtFf        -- ^ Fast failover group.
+  deriving (Enum, Eq, Show)
+
+-- TODO Group numbering...
+
+-- 7.3.5 Multipart Messages
+-- 7.3.6 Queue Configuration Messages
+-- 7.3.7 Packet-Out Message
+-- 7.3.8 Barrier Message
+-- 7.3.9 Role Request Message
+-- 7.3.10 Set Asynchronous Configuration Message
+
+-- 7.4 Asynchronous Messages
+
+-- 7.4.1 Packet-In Message
+-- 7.4.2 Flow Removed Message
+-- 7.4.3 Port Status Message
+-- 7.4.4 Error Message
+
+-- 7.5 Symmetric Messages
+
+-- 7.5.1 Hello
+-- 7.5.2 Echo Request
+-- 7.5.3 Echo Reply
+-- 7.5.4 Experimenter
 
