@@ -1,6 +1,6 @@
 > NOTE: Undergoing development. See `master` branch for stable.
 
-## haskell-openflow [![Build Status](https://travis-ci.org/brooksbp/haskell-openflow.png?branch=master)](https://travis-ci.org/brooksbp/haskell-openflow)
+## haskell-openflow [![Build Status](https://travis-ci.org/brooksbp/haskell-openflow.svg?branch=new)](https://travis-ci.org/brooksbp/haskell-openflow)
 
 Example server:
 
